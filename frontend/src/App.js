@@ -7,11 +7,19 @@ import Explorer from "./pages/Explorer";
 import MyBookings from "./pages/MyBookings";
 import Rooms from "./pages/Rooms";
 import VerifyPayment from "./pages/VerifyPayment";
-import SBCollectSimulator from "./pages/SBCollectSimulator"; // Isko zaroor import karein
+import SBCollectSimulator from "./pages/SBCollectSimulator";
 import { Toaster } from "react-hot-toast";
 import GuardScanner from "./pages/GuardScanner";
 import RectorDashboard from "./pages/RectorDashboard";
 import UserDashboard from "./pages/UserDashboard";
+import Profile from "./pages/CompleteProfile";
+import Booking from "./pages/MyBookings";
+import Verify from "./pages/VerifyPayment";
+import SOS from "./pages/SOS";
+
+// NEW IMPORTS
+import Settings from "./pages/Settings";
+import HelpBot from "./pages/HelpBot";
 
 function App() {
   const token = localStorage.getItem("token");
@@ -32,21 +40,25 @@ function App() {
         <Route path="/complete-profile" element={<CompleteProfile />} />
         <Route path="/home" element={<Home />} />
         <Route path="/explorer/:id" element={<Explorer />} />
-        
-        
-        {/* PAYMENTS SIMULATOR ROUTE */}
         <Route path="/payment-gateway/:id/:price" element={<SBCollectSimulator />} />
-
         <Route path="/rooms" element={<Rooms />} /> 
         <Route path="/rooms/:id" element={<Rooms />} />
-
         <Route path="/my-bookings" element={<MyBookings />} />
-         
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/verify-payment" element={<VerifyPayment />} />
         <Route path="/verify-payment/:id" element={<VerifyPayment />} />
         <Route path="/guard/scanner" element={<GuardScanner />} />
         <Route path="/rector/dashboard" element={<RectorDashboard />} />
         <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/booking" element={<Booking />} />
+        <Route path="/verify" element={<Verify />} />
+        <Route path="/sos" element={<SOS />} />
+        
+        {/* NEW OUTSTANDING ROUTES */}
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/helpbot" element={<HelpBot />} />
+
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
   );

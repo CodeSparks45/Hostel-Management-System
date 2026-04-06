@@ -1,180 +1,220 @@
-/**
- * Institutional Hostel Management System - Professional Login
- * Features: Automatic Redirection, LocalStorage Integration, StayPG UI
- */
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, Loader2, LogIn, ShieldCheck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 import API from "../services/api";
 
-import collegeLogo from "./sggs-logo.png"; 
+// Ensure these images are in the same folder as this file
+import SggsLogo from "./sggs-logo.png"; 
+import PremiumBoy from "./boy_pic.jpg"; 
 
-const C = {
-  pageBg: "#FFF8F0",
-  leftBg: "linear-gradient(155deg,#FEF9F0 0%,#FFF0DC 50%,#FFF5E8 100%)",
-  cardBg: "rgba(255,255,255,0.95)",
-  fieldBg: "rgba(255,248,240,0.85)",
-  border: "rgba(251,146,60,0.25)",
-  borderFocus: "rgba(249,115,22,0.6)",
-  primary: "#F97316",
-  gradBtn: "linear-gradient(135deg,#FCD34D 0%,#FB923C 55%,#F97316 100%)",
-  textDark: "#7C2D12",
-  textMid: "rgba(120,53,15,0.72)",
-  textMuted: "rgba(120,53,15,0.45)",
-};
-
-const loginSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Enter institutional email"),
-  password: z.string().min(1, "Password is required"),
-});
-
-// ─── LEFT SIDE CHARACTER COMPONENT ──────────────────────────────────────────
-function Character({ welcomed }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
-      <div style={{ position: "relative", width: 280, height: 280 }}>
-        <motion.div animate={{ rotate: 360 }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }} style={{ position: "absolute", inset: -15, borderRadius: "50%", border: `1px dashed ${C.primary}`, opacity: 0.15 }} />
-        <motion.div animate={{ scale: welcomed ? [1, 1.1, 1] : 1, opacity: welcomed ? [0.3, 0.5, 0.3] : 0.1 }} transition={{ duration: 2, repeat: Infinity }} style={{ position: "absolute", inset: 0, borderRadius: "50%", background: `radial-gradient(circle, ${C.primary} 0%, transparent 70%)` }} />
-        <svg viewBox="0 0 240 240" style={{ width: "100%", height: "100%", position: "relative", zIndex: 2 }}>
-          <ellipse cx="120" cy="220" rx="45" ry="8" fill="rgba(124,45,18,0.08)" />
-          <motion.g animate={{ y: welcomed ? -10 : 0 }} transition={{ type: "spring", stiffness: 100 }}>
-            <path d="M65 215 L80 155 Q120 130 160 155 L175 215 Z" fill="white" stroke={C.primary} strokeWidth="2" />
-            <path d="M108 153 L120 172 L132 153" fill="white" stroke={C.primary} strokeWidth="1.5" />
-            <path d="M116 172 L124 172 L120 195 Z" fill={C.primary} />
-            <circle cx="120" cy="115" r="26" fill="#FFFBEB" stroke={C.primary} strokeWidth="2" />
-            <g opacity="0.6" stroke={C.textDark} strokeWidth="1.2" fill="none">
-              <path d="M106 115 Q112 110 118 115" />
-              <path d="M122 115 Q128 110 134 115" />
-              <line x1="118" y1="115" x2="122" y2="115" />
-            </g>
-          </motion.g>
-        </svg>
-      </div>
-      <div style={{ textAlign: "center", maxWidth: 300 }}>
-        <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, color: C.textDark, margin: 0 }}>Grand Authority</h2>
-        <p style={{ fontSize: 12, color: C.textMid, marginTop: 10, lineHeight: 1.6 }}>Precision in Management. <br/> <strong>Excellence in Hospitality.</strong></p>
-      </div>
-    </div>
-  );
-}
-
-// ─── MAIN LOGIN PAGE ────────────────────────────────────────────────────────
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isHoveringHome, setIsHoveringHome] = useState(false);
+
   const navigate = useNavigate();
-  const [showPw, setShowPw] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [welcomed, setWelcomed] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm({ 
-    resolver: zodResolver(loginSchema) 
-  });
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
 
-  // Login Logic with Redirection
-  const onSubmit = async (data) => {
-    setLoading(true);
     try {
-      const res = await API.post("/api/auth/login", data);
+      const res = await API.post("/api/auth/login", { email, password });
       
-      // Save Token and User Object (gender, role etc.)
+      // Save Token and User Data to localStorage
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user)); 
+      
+      toast.success("Login Successful 🚀");
+      
+      // 🚀 THE MAGIC LOGIC: Redirect based on user role
+      setTimeout(() => {
+        if (res.data.user.role === "rector" || res.data.user.role === "admin") {
+          navigate("/rector/dashboard");
+        } else {
+          navigate("/dashboard");
+        }
+      }, 1000);
 
-      toast.success("Identity Verified! Welcome to StayPG.");
-
-      // REDIRECTION LOGIC
-
-       setTimeout(() => {
-      navigate("/"); 
-    }, 1000);
-
-  } catch (err) {
-    toast.error(err.response?.data?.message || "Invalid Credentials");
-  } finally {
-    setLoading(false);
-  }
-};
-
-   
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Login Failed ❌");
+      setIsLoggingIn(false);
+    }
+  };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: C.pageBg, fontFamily: "'Inter', sans-serif" }}>
-      <Toaster position="top-right" />
+    <div className="min-h-screen w-full flex bg-sky-50 p-4 md:p-10 items-center justify-center font-sans">
+      <Toaster />
 
-      {/* LEFT SIDE VISUAL */}
-      <motion.div onMouseEnter={() => setWelcomed(true)} onMouseLeave={() => setWelcomed(false)} style={{ display: "none", width: "45%", background: C.leftBg, borderRight: `1px solid ${C.border}`, flexDirection: "column", justifyContent: "center", alignItems: "center", position: "relative" }} className="md-flex">
-        <Character welcomed={welcomed} />
-      </motion.div>
-
-      {/* RIGHT SIDE FORM */}
-      <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", padding: 24 }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ width: "100%", maxWidth: 400 }}>
+      <div className="w-full max-w-6xl grid md:grid-cols-2 bg-white rounded-[2.5rem] overflow-hidden shadow-2xl border border-sky-100">
+        
+        {/* LEFT SIDE - Premium 3D Display */}
+        <div className="hidden md:flex relative items-center justify-center bg-gradient-to-br from-sky-100 via-white to-teal-50 overflow-hidden">
           
-          <div style={{ textAlign: "center", marginBottom: 35 }}>
-            <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} style={{ display: "inline-flex", padding: 15, borderRadius: "30px", background: "#fff", marginBottom: 20, boxShadow: "0 10px 30px rgba(0,0,0,0.05)", border: `1px solid ${C.border}` }}>
-              <img src={collegeLogo} alt="Logo" style={{ width: 85, height: 85, objectFit: "contain" }} onError={(e) => e.target.style.display = 'none'} />
-            </motion.div>
-            <h1 style={{ fontSize: 22, fontWeight: 900, color: C.textDark, textTransform: "uppercase", letterSpacing: "0.05em" }}>Hostel Management</h1>
-            <div style={{ height: 2, width: 40, background: C.primary, margin: "12px auto" }} />
-          </div>
+          {/* Ambient Light Glows */}
+          <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-sky-200/50 blur-[100px] rounded-full pointer-events-none" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-teal-200/40 blur-[100px] rounded-full pointer-events-none" />
 
-          <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 28, padding: "40px 30px", boxShadow: "0 30px 70px rgba(124,45,18,0.08)" }}>
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 10, fontWeight: 800, color: C.textMuted, textTransform: "uppercase", marginBottom: 8, display: "block", marginLeft: 4 }}>Official Email</label>
-                <div style={{ position: "relative" }}>
-                  <Mail style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: C.primary, opacity: 0.5 }} size={16} />
-                  <input {...register("email")} type="email" placeholder="user@sggs.ac.in" style={inputStyle} />
-                </div>
-                {errors.email && <p style={errorStyle}>{errors.email.message}</p>}
-              </div>
+          <div className="relative w-full h-full flex items-center justify-center z-10 mix-blend-multiply">
+            
+            {/* The 3D Character Image (Floating) */}
+            <motion.img 
+              animate={{ y: [0, -12, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+              src={PremiumBoy} 
+              alt="Welcome Boy" 
+              className="w-3/4 max-w-[450px] object-contain drop-shadow-2xl z-10"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+
+            <div 
+              className="absolute z-20 flex items-center justify-center"
+              style={{ left: '68%', top: '42%' }} 
+              onMouseEnter={() => setIsHoveringHome(true)}
+              onMouseLeave={() => setIsHoveringHome(false)}
+            >
               
-              <div style={{ marginBottom: 10 }}>
-                <label style={{ fontSize: 10, fontWeight: 800, color: C.textMuted, textTransform: "uppercase", marginBottom: 8, display: "block", marginLeft: 4 }}>Password</label>
-                <div style={{ position: "relative" }}>
-                  <Lock style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: C.primary, opacity: 0.5 }} size={16} />
-                  <input {...register("password")} type={showPw ? "text" : "password"} placeholder="••••••••" style={inputStyle} />
-                  <button type="button" onClick={() => setShowPw(!showPw)} style={eyeBtnStyle}>
-                    {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
+              {/* Animated Floating Quotes */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                <AnimatePresence>
+                  {isHoveringHome && (
+                    <>
+                      <motion.div
+                        initial={{ opacity: 0, y: 20, scale: 0.5 }}
+                        animate={{ opacity: 1, y: -90, x: -60, scale: 1 }}
+                        exit={{ opacity: 0, y: 0, scale: 0.5 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                        className="absolute bg-white/90 backdrop-blur-md text-sky-600 px-5 py-2.5 rounded-2xl shadow-xl text-sm font-bold tracking-wide border border-white whitespace-nowrap"
+                      >
+                        🌿 Peaceful Stay
+                      </motion.div>
+                      
+                      <motion.div
+                        initial={{ opacity: 0, y: 20, scale: 0.5 }}
+                        animate={{ opacity: 1, y: -110, x: 70, scale: 1 }}
+                        exit={{ opacity: 0, y: 0, scale: 0.5 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.05 }}
+                        className="absolute bg-white/90 backdrop-blur-md text-orange-500 px-5 py-2.5 rounded-2xl shadow-xl text-sm font-bold tracking-wide border border-white whitespace-nowrap"
+                      >
+                        😊 Happy Living
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 20, scale: 0.5 }}
+                        animate={{ opacity: 1, y: -30, x: 110, scale: 1 }}
+                        exit={{ opacity: 0, y: 0, scale: 0.5 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+                        className="absolute bg-white/90 backdrop-blur-md text-teal-600 px-5 py-2.5 rounded-2xl shadow-xl text-sm font-bold tracking-wide border border-white whitespace-nowrap"
+                      >
+                        🛡️ Safe & Secure
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* The Glowing House Icon Overlay */}
+              <motion.div
+                animate={{ y: [0, -6, 0], rotate: [0, 2, -2, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                className="relative cursor-pointer group"
+              >
+                {/* Intensive Glow Effect */}
+                <div className={`absolute inset-0 bg-yellow-400 rounded-full blur-2xl transition-all duration-300 ${isHoveringHome ? 'opacity-100 scale-150' : 'opacity-60 scale-100'}`} />
+                
+                {/* Glassmorphism House Badge */}
+                <div className="relative w-16 h-16 bg-white/40 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-[0_8px_32px_rgba(250,204,21,0.5)] border border-white/60 transition-transform duration-300 group-hover:scale-110">
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="#ea580c" 
+                    strokeWidth="2.5" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className="w-8 h-8 drop-shadow-md"
+                  >
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                  </svg>
                 </div>
-                {errors.password && <p style={errorStyle}>{errors.password.message}</p>}
+              </motion.div>
+            </div>
+
+            <p className={`absolute bottom-8 text-sky-600/80 font-bold text-sm tracking-widest uppercase transition-opacity duration-300 ${isHoveringHome ? 'opacity-0' : 'opacity-100'}`}>
+              Hover over the home!
+            </p>
+
+          </div>
+        </div>
+
+        {/* RIGHT SIDE - Bright Login Form */}
+        <div className="flex flex-col justify-center px-8 md:px-20 py-16 bg-white">
+          <div className="max-w-sm w-full mx-auto">
+            
+            <header className="mb-10 text-center flex flex-col items-center">
+              <img 
+                src={SggsLogo} 
+                alt="SGGS Logo" 
+                className="w-28 object-contain mb-6 drop-shadow-sm"
+              />
+              <h1 className="text-3xl font-extrabold text-slate-800 mb-2">Welcome Back</h1>
+              <p className="text-slate-400 text-sm font-medium">Log in to your hostel dashboard</p>
+            </header>
+
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border-b-2 border-slate-100 py-3 text-slate-700 bg-transparent outline-none focus:border-sky-400 transition-colors"
+                  placeholder="student@sggs.ac.in"
+                />
               </div>
 
-              <div style={{ textAlign: "right", marginBottom: 25 }}>
-                <Link to="/forgot-password" style={{ fontSize: 11, color: C.primary, fontWeight: 700, textDecoration: "none" }}>Forgot Password?</Link>
+              <div>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">Password</label>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border-b-2 border-slate-100 py-3 text-slate-700 bg-transparent outline-none focus:border-sky-400 transition-colors"
+                  placeholder="••••••••"
+                />
               </div>
 
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} disabled={loading} style={submitBtnStyle}>
-                {loading ? <Loader2 size={20} className="animate-spin" /> : <>Log In <LogIn size={18}/></>}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={isLoggingIn}
+                className="w-full bg-sky-500 text-white py-4 rounded-xl font-bold flex justify-center items-center shadow-lg shadow-sky-500/30 hover:shadow-sky-500/50 hover:bg-sky-600 transition-all disabled:opacity-70 mt-4"
+              >
+                {isLoggingIn ? (
+                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Log into Dashboard"
+                )}
               </motion.button>
             </form>
 
-            <div style={{ textAlign: "center", marginTop: 25, paddingTop: 20, borderTop: `1px solid rgba(124,45,18,0.08)` }}>
-              <p style={{ fontSize: 13, color: C.textMid, fontWeight: 500 }}>New User? <Link to="/signup" style={{ color: C.primary, fontWeight: 800, textDecoration: "none", marginLeft: 4 }}>Create Account</Link></p>
-            </div>
+            <p className="text-center mt-8 text-slate-400 text-sm">
+              Don't have an account?{" "}
+              <Link to="/signup" className="text-sky-500 font-bold hover:underline">
+                Sign Up
+              </Link>
+            </p>
+
           </div>
+        </div>
 
-          <p style={{ textAlign: "center", fontSize: 10, color: C.textMuted, marginTop: 28, fontWeight: 700, letterSpacing: 1.5 }}>SGGSIE&T OFFICIAL PORTAL</p>
-        </motion.div>
       </div>
-
-      <style>{`
-        @media(min-width:768px){.md-flex{display:flex!important}}
-        .animate-spin { animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
     </div>
   );
 }
-
-// Inline Styles for simplicity
-const inputStyle = { width: "100%", padding: "14px 14px 14px 42px", background: C.fieldBg, border: `1px solid ${C.border}`, borderRadius: 14, fontSize: 14, outline: "none" };
-const errorStyle = { fontSize: 11, color: "#DC2626", marginTop: 5, marginLeft: 4 };
-const eyeBtnStyle = { position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: C.primary, opacity: 0.5 };
-const submitBtnStyle = { width: "100%", padding: "16px 0", borderRadius: 16, border: "none", background: C.gradBtn, color: "#7C2D12", fontWeight: 800, fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 };

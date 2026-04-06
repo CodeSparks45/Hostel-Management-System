@@ -1,7 +1,7 @@
 /**
  * Institutional Hostel Management System - Signup Portal
  * Features: Role & Gender Selection for StayPG Logic
- * Fix: VenusAndMars icon update for lucide-react compatibility
+ * Style: Premium Light Theme with 3D Assets & Glassmorphism
  */
 
 import { useState } from "react";
@@ -9,33 +9,20 @@ import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Mail, Lock, Eye, EyeOff, AlertCircle, 
   Loader2, User, UserPlus, ShieldCheck, 
-  Briefcase, VenusAndMars 
+  Briefcase, VenusAndMars, ChevronDown
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import API from "../services/api";
 
-import collegeLogo from "./sggs-logo.png"; 
+// Same assets used in Login for absolute consistency
+import SggsLogo from "./sggs-logo.png"; 
+import PremiumBoy from "./boy_pic.jpg"; 
 
-const C = {
-  pageBg: "#FFF8F0",
-  leftBg: "linear-gradient(155deg,#FEF9F0 0%,#FFF0DC 50%,#FFF5E8 100%)",
-  cardBg: "rgba(255,255,255,0.95)",
-  fieldBg: "rgba(255,248,240,0.85)",
-  border: "rgba(251,146,60,0.25)",
-  borderFocus: "rgba(249,115,22,0.6)",
-  primary: "#F97316",
-  primaryDark: "#EA580C",
-  gradBtn: "linear-gradient(135deg,#FCD34D 0%,#FB923C 55%,#F97316 100%)",
-  textDark: "#7C2D12",
-  textMid: "rgba(120,53,15,0.72)",
-  textMuted: "rgba(120,53,15,0.45)",
-  errorText: "#DC2626",
-};
-
+// --- Validation Schema ---
 const signupSchema = z.object({
   name: z.string().min(1, "Full Name is required").max(50),
   email: z.string().min(1, "Email is required").email("Enter institutional email"),
@@ -48,155 +35,243 @@ const signupSchema = z.object({
   }),
 });
 
-function Character({ welcomed }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
-      <div style={{ position: "relative", width: 280, height: 280 }}>
-        <motion.div animate={{ rotate: 360 }} transition={{ duration: 25, repeat: Infinity, ease: "linear" }} style={{ position: "absolute", inset: -15, borderRadius: "50%", border: `1px dashed ${C.primary}`, opacity: 0.15 }} />
-        <motion.div animate={{ scale: welcomed ? [1, 1.1, 1] : 1, opacity: welcomed ? [0.3, 0.5, 0.3] : 0.1 }} transition={{ duration: 2, repeat: Infinity }} style={{ position: "absolute", inset: 0, borderRadius: "50%", background: `radial-gradient(circle, ${C.primary} 0%, transparent 70%)` }} />
-        <svg viewBox="0 0 240 240" style={{ width: "100%", height: "100%", position: "relative", zIndex: 2 }}>
-          <ellipse cx="120" cy="220" rx="45" ry="8" fill="rgba(124,45,18,0.08)" />
-          <motion.g animate={{ y: welcomed ? -10 : 0 }} transition={{ type: "spring", stiffness: 100 }}>
-            <path d="M65 215 L80 155 Q120 130 160 155 L175 215 Z" fill="white" stroke={C.primary} strokeWidth="2" />
-            <path d="M108 153 L120 172 L132 153" fill="white" stroke={C.primary} strokeWidth="1.5" />
-            <path d="M116 172 L124 172 L120 195 Z" fill={C.primary} />
-            <circle cx="120" cy="115" r="26" fill="#FFFBEB" stroke={C.primary} strokeWidth="2" />
-            <g opacity="0.6" stroke={C.textDark} strokeWidth="1.2" fill="none">
-              <path d="M106 115 Q112 110 118 115" />
-              <path d="M122 115 Q128 110 134 115" />
-              <line x1="118" y1="115" x2="122" y2="115" />
-            </g>
-          </motion.g>
-        </svg>
+// --- Reusable Input Component (Tailwind Styled) ---
+const InputField = ({ label, icon: Icon, error, rightEl, isSelect, children, ...props }) => (
+  <div className="mb-4">
+    <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5 block ml-1">
+      {label}
+    </label>
+    <div className="relative">
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-400">
+        <Icon size={18} className={error ? "text-red-400" : ""} />
       </div>
-      <div style={{ textAlign: "center", maxWidth: 300 }}>
-        <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, color: C.textDark, margin: 0 }}>
-          StayPG <span style={{ color: C.primary }}>Portal</span>
-        </h2>
-        <p style={{ fontSize: 12, color: C.textMid, marginTop: 10, lineHeight: 1.6, opacity: 0.8 }}>
-          Precision in Management. <br/> 
-          <strong>Excellence in Hospitality.</strong>
-        </p>
-      </div>
-    </div>
-  );
-}
+      
+      {isSelect ? (
+        <select
+          {...props}
+          className={`w-full py-3 pl-8 pr-8 bg-transparent border-b-2 text-slate-700 outline-none transition-colors appearance-none cursor-pointer ${
+            error ? "border-red-300 focus:border-red-500" : "border-slate-100 focus:border-sky-400"
+          }`}
+        >
+          {children}
+        </select>
+      ) : (
+        <input
+          {...props}
+          className={`w-full py-3 pl-8 pr-10 bg-transparent border-b-2 text-slate-700 outline-none transition-colors ${
+            error ? "border-red-300 focus:border-red-500" : "border-slate-100 focus:border-sky-400"
+          }`}
+        />
+      )}
+      
+      {/* Dropdown Arrow for Selects */}
+      {isSelect && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+          <ChevronDown size={16} />
+        </div>
+      )}
 
-function Field({ id, label, icon: Icon, error, rightEl, children, isSelect, ...props }) {
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ display: "block", fontSize: 9, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: C.textMuted, marginBottom: 6, marginLeft: 4 }}>{label}</label>
-      <div style={{ position: "relative" }}>
-        <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: error ? C.errorText : "rgba(180,80,20,0.4)", zIndex: 5 }}>
-          <Icon size={16} />
-        </span>
-        {isSelect ? (
-          <select {...props} style={{ width: "100%", padding: "12px 14px 12px 42px", background: C.fieldBg, border: `1px solid ${error ? "#FDA4AF" : C.border}`, borderRadius: 14, fontSize: 13.5, outline: "none", appearance: "none", cursor: "pointer" }}>
-            {children}
-          </select>
-        ) : (
-          <input {...props} style={{ width: "100%", padding: "12px 14px 12px 42px", background: C.fieldBg, border: `1px solid ${error ? "#FDA4AF" : C.border}`, borderRadius: 14, fontSize: 13.5, outline: "none" }} onFocus={(e) => e.target.style.borderColor = C.borderFocus} />
-        )}
-        {rightEl && <div style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)" }}>{rightEl}</div>}
-      </div>
-      {error && <p style={{ fontSize: 11, color: C.errorText, marginTop: 5, marginLeft: 4, display: "flex", alignItems: "center", gap: 4 }}><AlertCircle size={12}/>{error}</p>}
+      {/* Custom Right Element (like Show/Hide Password) */}
+      {rightEl && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+          {rightEl}
+        </div>
+      )}
     </div>
-  );
-}
+    
+    {error && (
+      <p className="text-[11px] text-red-500 mt-1.5 ml-1 flex items-center gap-1 font-medium">
+        <AlertCircle size={12} /> {error}
+      </p>
+    )}
+  </div>
+);
+
 
 export default function SignupPage() {
   const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [welcomed, setWelcomed] = useState(false);
+  const [isHoveringHome, setIsHoveringHome] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(signupSchema) });
+  const { register, handleSubmit, formState: { errors } } = useForm({ 
+    resolver: zodResolver(signupSchema) 
+  });
 
   const onSubmit = async (data) => {
     setLoading(true);
     try {
       await API.post("/api/auth/signup", data);
-      toast.success("Registration Successful!");
+      toast.success("Registration Successful! 🎉");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Registration Failed");
-    } finally { setLoading(false); }
+      toast.error(err.response?.data?.message || "Registration Failed ❌");
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: C.pageBg, fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen w-full flex bg-sky-50 p-4 md:p-10 items-center justify-center font-sans">
       <Toaster position="top-right" />
 
-      {/* LEFT SIDE VISUAL */}
-      <motion.div onMouseEnter={() => setWelcomed(true)} onMouseLeave={() => setWelcomed(false)} style={{ display: "none", width: "45%", background: C.leftBg, borderRight: `1px solid ${C.border}`, flexDirection: "column", justifyContent: "center", alignItems: "center", position: "relative" }} className="md-flex">
-        <Character welcomed={welcomed} />
-      </motion.div>
-
-      {/* RIGHT SIDE FORM */}
-      <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", padding: 24 }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ width: "100%", maxWidth: 450 }}>
+      <div className="w-full max-w-6xl grid md:grid-cols-2 bg-white rounded-[2.5rem] overflow-hidden shadow-2xl border border-sky-100">
+        
+        {/* LEFT SIDE - Premium 3D Display (Matches Login Page) */}
+        <div className="hidden md:flex relative items-center justify-center bg-gradient-to-br from-sky-100 via-white to-teal-50 overflow-hidden">
           
-          <div style={{ textAlign: "center", marginBottom: 30 }}>
-            <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} style={{ display: "inline-flex", padding: 12, borderRadius: "28px", background: "#fff", marginBottom: 15, boxShadow: "0 10px 30px rgba(0,0,0,0.05)", border: `1px solid ${C.border}` }}>
-              <img src={collegeLogo} alt="College Logo" style={{ width: 75, height: 75, objectFit: "contain" }} onError={(e) => { e.target.style.display = 'none'; }} />
-            </motion.div>
-            <h1 style={{ fontSize: 22, fontWeight: 900, color: C.textDark, textTransform: "uppercase", letterSpacing: "0.05em" }}>Hostel Management</h1>
-            <p style={{ fontSize: 11, color: C.textMuted, fontWeight: 700, letterSpacing: 1.2 }}>SECURE ENROLLMENT GATEWAY</p>
-          </div>
+          <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-sky-200/50 blur-[100px] rounded-full pointer-events-none" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-teal-200/40 blur-[100px] rounded-full pointer-events-none" />
 
-          <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 28, padding: "35px 30px", boxShadow: "0 30px 70px rgba(124,45,18,0.08)" }}>
+          <div className="relative w-full h-full flex items-center justify-center z-10 mix-blend-multiply">
+            
+            <motion.img 
+              animate={{ y: [0, -12, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+              src={PremiumBoy} 
+              alt="Welcome Boy" 
+              className="w-3/4 max-w-[450px] object-contain drop-shadow-2xl z-10"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+
+            <div 
+              className="absolute z-20 flex items-center justify-center"
+              style={{ left: '68%', top: '42%' }} 
+              onMouseEnter={() => setIsHoveringHome(true)}
+              onMouseLeave={() => setIsHoveringHome(false)}
+            >
+              
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                <AnimatePresence>
+                  {isHoveringHome && (
+                    <>
+                      <motion.div
+                        initial={{ opacity: 0, y: 20, scale: 0.5 }}
+                        animate={{ opacity: 1, y: -90, x: -60, scale: 1 }}
+                        exit={{ opacity: 0, y: 0, scale: 0.5 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                        className="absolute bg-white/90 backdrop-blur-md text-sky-600 px-5 py-2.5 rounded-2xl shadow-xl text-sm font-bold tracking-wide border border-white whitespace-nowrap"
+                      >
+                        🌿 Peaceful Stay
+                      </motion.div>
+                      
+                      <motion.div
+                        initial={{ opacity: 0, y: 20, scale: 0.5 }}
+                        animate={{ opacity: 1, y: -110, x: 70, scale: 1 }}
+                        exit={{ opacity: 0, y: 0, scale: 0.5 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.05 }}
+                        className="absolute bg-white/90 backdrop-blur-md text-orange-500 px-5 py-2.5 rounded-2xl shadow-xl text-sm font-bold tracking-wide border border-white whitespace-nowrap"
+                      >
+                        😊 Happy Living
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 20, scale: 0.5 }}
+                        animate={{ opacity: 1, y: -30, x: 110, scale: 1 }}
+                        exit={{ opacity: 0, y: 0, scale: 0.5 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+                        className="absolute bg-white/90 backdrop-blur-md text-teal-600 px-5 py-2.5 rounded-2xl shadow-xl text-sm font-bold tracking-wide border border-white whitespace-nowrap"
+                      >
+                        🛡️ Safe & Secure
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <motion.div
+                animate={{ y: [0, -6, 0], rotate: [0, 2, -2, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                className="relative cursor-pointer group"
+              >
+                <div className={`absolute inset-0 bg-yellow-400 rounded-full blur-2xl transition-all duration-300 ${isHoveringHome ? 'opacity-100 scale-150' : 'opacity-60 scale-100'}`} />
+                <div className="relative w-16 h-16 bg-white/40 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-[0_8px_32px_rgba(250,204,21,0.5)] border border-white/60 transition-transform duration-300 group-hover:scale-110">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 drop-shadow-md">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                  </svg>
+                </div>
+              </motion.div>
+            </div>
+
+            <p className={`absolute bottom-8 text-sky-600/80 font-bold text-sm tracking-widest uppercase transition-opacity duration-300 ${isHoveringHome ? 'opacity-0' : 'opacity-100'}`}>
+              Hover over the home!
+            </p>
+
+          </div>
+        </div>
+
+        {/* RIGHT SIDE - Registration Form */}
+        <div className="flex flex-col justify-center px-8 md:px-16 py-12 bg-white max-h-[90vh] overflow-y-auto">
+          <div className="max-w-sm w-full mx-auto">
+            
+            <header className="mb-8 text-center flex flex-col items-center">
+              <img 
+                src={SggsLogo} 
+                alt="SGGS Logo" 
+                className="w-20 object-contain mb-4 drop-shadow-sm"
+              />
+              <h1 className="text-2xl font-extrabold text-slate-800 mb-1 uppercase tracking-wide">Hostel Enrollment</h1>
+              <p className="text-slate-400 text-xs font-bold tracking-widest uppercase">Secure Gateway</p>
+            </header>
+
             <form onSubmit={handleSubmit(onSubmit)}>
-              <Field id="name" label="Full Name" icon={User} type="text" placeholder="Prof. Abhijit Singh" error={errors.name?.message} {...register("name")} />
               
-              <Field id="email" label="Official Email" icon={Mail} type="email" placeholder="user@sggs.ac.in" error={errors.email?.message} {...register("email")} />
+              <InputField id="name" label="Full Name" icon={User} type="text" placeholder="Prof. Abhijit Singh" error={errors.name?.message} {...register("name")} />
               
-              {/* DESIGNATION DROPDOWN */}
-              <Field id="role" label="Designation" icon={Briefcase} isSelect error={errors.role?.message} {...register("role")}>
-                <option value="">Select Professional Role</option>
+              <InputField id="email" label="Official Email" icon={Mail} type="email" placeholder="user@sggs.ac.in" error={errors.email?.message} {...register("email")} />
+              
+              <InputField id="role" label="Designation" icon={Briefcase} isSelect error={errors.role?.message} {...register("role")}>
+                <option value="" disabled className="text-slate-300">Select Professional Role</option>
                 <option value="professor">Faculty / Professor</option>
                 <option value="hod">Department Head (HOD)</option>
                 <option value="principal">Principal / Director</option>
                 <option value="guest">Visiting Guest</option>
-              </Field>
+              </InputField>
 
-              {/* GENDER DROPDOWN (STAYPG CORE LOGIC) */}
-              <Field id="gender" label="Gender Allocation" icon={VenusAndMars} isSelect error={errors.gender?.message} {...register("gender")}>
-                <option value="">Select Gender</option>
+              <InputField id="gender" label="Gender Allocation" icon={VenusAndMars} isSelect error={errors.gender?.message} {...register("gender")}>
+                <option value="" disabled className="text-slate-300">Select Gender</option>
                 <option value="male">Male (Sahyadri Hostel)</option>
                 <option value="female">Female (Nandgiri Hostel)</option>
-              </Field>
+              </InputField>
 
-              <Field id="password" label="Security Password" icon={Lock} type={showPw ? "text" : "password"} placeholder="••••••••" error={errors.password?.message} {...register("password")}
-                rightEl={<button type="button" onClick={() => setShowPw(!showPw)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(180,80,20,0.4)" }}>{showPw ? <EyeOff size={16} /> : <Eye size={16} />}</button>}
+              <InputField id="password" label="Security Password" icon={Lock} type={showPw ? "text" : "password"} placeholder="••••••••" error={errors.password?.message} {...register("password")}
+                rightEl={
+                  <button type="button" onClick={() => setShowPw(!showPw)} className="text-slate-400 hover:text-sky-500 transition-colors focus:outline-none">
+                    {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                }
               />
 
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} disabled={loading}
-                style={{ width: "100%", padding: "16px 0", marginTop: 10, borderRadius: 16, border: "none", background: C.gradBtn, color: "#7C2D12", fontWeight: 800, fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={loading}
+                className="w-full bg-sky-500 text-white py-4 rounded-xl font-bold flex justify-center items-center shadow-lg shadow-sky-500/30 hover:shadow-sky-500/50 hover:bg-sky-600 transition-all disabled:opacity-70 mt-6 gap-2"
               >
                 {loading ? <Loader2 size={20} className="animate-spin" /> : <>Complete Signup <UserPlus size={18}/></>}
               </motion.button>
             </form>
-            
-            <div style={{ textAlign: "center", marginTop: 22 }}>
-              <p style={{ fontSize: 13, color: C.textMid, fontWeight: 500 }}>
-                Already registered? <Link to="/login" style={{ color: C.primary, fontWeight: 800, textDecoration: "none", marginLeft: 4 }}>Log In</Link>
+
+            <div className="text-center mt-8">
+              <p className="text-sm text-slate-400 font-medium">
+                Already registered?{" "}
+                <Link to="/login" className="text-sky-500 font-bold hover:underline ml-1">
+                  Log In
+                </Link>
               </p>
             </div>
-          </div>
 
-          <div style={{ marginTop: 25, display: "flex", justifyContent: "center", alignItems: "center", gap: 8, color: C.textMuted }}>
-             <ShieldCheck size={14} color={C.primary} />
-             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.2 }}>SGGSIE&T OFFICIAL PORTAL</span>
+            <div className="mt-8 pt-6 border-t border-slate-100 flex justify-center items-center gap-2 text-slate-400">
+              <ShieldCheck size={16} className="text-sky-500" />
+              <span className="text-[10px] font-bold tracking-widest uppercase">SGGSIE&T Official Portal</span>
+            </div>
+
           </div>
-        </motion.div>
+        </div>
+
       </div>
-
-      <style>{`
-        @media(min-width:768px){.md-flex{display:flex!important}}
-        .animate-spin { animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
-      `}</style>
     </div>
   );
 }
