@@ -2,15 +2,36 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+// ✅ Allowed roles
+const ALLOWED_ROLES = ["guest", "professor", "hod", "principal", "admin"];
+const ALLOWED_GENDERS = ["male", "female"];
+
 // =====================
 // SIGNUP
 // =====================
 exports.signup = async (req, res) => {
   try {
-    const { name, email, password, role, gender } = req.body;
+    let { name, email, password, role, gender } = req.body;
 
+    // 🔥 SANITIZE INPUT (MOST IMPORTANT FIX)
+    role = role?.toLowerCase().trim();
+    gender = gender?.toLowerCase().trim();
+
+    // 🔍 DEBUG (optional - remove later)
+    console.log("Incoming role:", role);
+    console.log("Incoming gender:", gender);
+
+    // ❌ Validation
     if (!name || !email || !password || !role || !gender) {
       return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (!ALLOWED_ROLES.includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    if (!ALLOWED_GENDERS.includes(gender)) {
+      return res.status(400).json({ message: "Invalid gender" });
     }
 
     const existingUser = await User.findOne({ email });
@@ -26,12 +47,18 @@ exports.signup = async (req, res) => {
       password: hashedPassword,
       role,
       gender,
-      profileCompleted: false, // Default false rahega
+      profileCompleted: false,
     });
 
     res.status(201).json({
       message: "User registered successfully",
-      user: { id: user._id, name: user.name, profileCompleted: user.profileCompleted }
+      user: {
+        id: user._id,
+        name: user.name,
+        role: user.role,
+        gender: user.gender,
+        profileCompleted: user.profileCompleted
+      }
     });
 
   } catch (err) {
@@ -66,7 +93,6 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // Frontend ko full user data bhejo taaki gender lock aur flow kaam kare
     res.status(200).json({
       message: "Login successful",
       token,
@@ -86,31 +112,45 @@ exports.login = async (req, res) => {
 };
 
 // =====================
-// COMPLETE PROFILE (New Logic for Flow)
+// COMPLETE PROFILE
 // =====================
 exports.completeProfile = async (req, res) => {
   try {
-    const { phone, collegeId, gender, role } = req.body;
-    
-    // User update logic
+    let { phone, collegeId, gender, role } = req.body;
+
+    // 🔥 SANITIZE AGAIN
+    if (role) role = role.toLowerCase().trim();
+    if (gender) gender = gender.toLowerCase().trim();
+
+    if (role && !ALLOWED_ROLES.includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    if (gender && !ALLOWED_GENDERS.includes(gender)) {
+      return res.status(400).json({ message: "Invalid gender" });
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
-      req.user.id, 
-      { 
-        phone, 
-        collegeId, 
-        gender, 
-        role, 
-        profileCompleted: true 
+      req.user.id,
+      {
+        phone,
+        collegeId,
+        gender,
+        role,
+        profileCompleted: true
       },
       { new: true }
     );
 
-    if (!updatedUser) return res.status(404).json({ message: "User not found" });
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     res.status(200).json({
       message: "Profile updated successfully!",
       user: updatedUser
     });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

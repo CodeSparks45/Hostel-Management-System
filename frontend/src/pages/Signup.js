@@ -97,7 +97,7 @@ export default function SignupPage() {
   const { register, handleSubmit, formState: { errors } } = useForm({ 
     resolver: zodResolver(signupSchema) 
   });
-
+  const roles = ["guest","professor","hod","principal","admin",];
   const onSubmit = async (data) => {
     setLoading(true);
     try {
