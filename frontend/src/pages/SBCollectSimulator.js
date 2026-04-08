@@ -7,7 +7,7 @@ export default function SBCollectSimulate() {
   const { id, amount } = useParams();
   const navigate = useNavigate();
   
-  // Real SBI Collect Flow States
+  
   const [step, setStep] = useState(0); 
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [state, setState] = useState("");

@@ -9,7 +9,7 @@ import {
 import toast, { Toaster } from "react-hot-toast";
 import API from "../services/api";
 
-import SggsLogo from "./sggs-logo.png"; // Ensure this path is correct
+import SggsLogo from "./sggs-logo.png"; 
 
 export default function MyBookings() {
   const navigate = useNavigate();
