@@ -1,1 +1,15 @@
+# Dependency directories
+node_modules/
+
+# Environment variables (⚠️ VERY IMPORTANT)
 .env
+
+# Log files (Created by Winston)
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
