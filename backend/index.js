@@ -23,7 +23,6 @@ cron.schedule('*/10 * * * *', async () => {
   for (let b of expired) {
     b.status = 'expired';
     await b.save();
-    // Room vacancy increase karo automatically
     await Room.findByIdAndUpdate(b.room, { $inc: { availableRooms: 1 } });
     console.log(`Room freed: Booking ${b._id} expired.`);
   }
@@ -55,12 +54,10 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/book", bookingRoutes);
 app.use("/api/admin", adminRoutes);
 
-// Test Route
 app.get("/", (req, res) => {
   res.send("Server chal raha hai 🚀");
 });
 
-// Protected Route
 app.get("/api/protected", authMiddleware, (req, res) => {
   res.json({
     message: "You accessed protected route 🔐",
@@ -68,7 +65,20 @@ app.get("/api/protected", authMiddleware, (req, res) => {
   });
 });
 
-// ✨ [PHASE 1] Logger Test Route (Error Handler se theek pehle)
+// ✨ [PHASE 1] Cloudinary Test Route (Postman se image yahan bhejenge)
+const upload = require('./middleware/uploadMiddleware');
+app.post('/api/upload-test', upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'Koi file upload nahi hui bhai!' });
+  }
+  res.status(200).json({
+    success: true,
+    message: 'File successfully uploaded to Cloudinary! ☁️🚀',
+    fileUrl: req.file.path // Yeh live URL dega
+  });
+});
+
+// ✨ [PHASE 1] Logger Test Route
 app.get('/test-error', (req, res) => {
   throw new Error("Yeh ek test error hai logger check karne ke liye!");
 });
@@ -79,6 +89,6 @@ app.use(errorHandler);
 // Server start
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  logger.info(`🚀 Server started on port ${PORT}`); // Winston mein log hoga
-  console.log(`Server started on port ${PORT}`); // Terminal mein dikhega
+  logger.info(`🚀 Server started on port ${PORT}`); 
+  console.log(`Server started on port ${PORT}`); 
 });
