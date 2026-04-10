@@ -2,17 +2,38 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const cron = require('node-cron');
-
-// ✨ [PHASE 1 IMPORTS] Security & Logging
 const helmet = require("helmet");
+
+// ✨ Security & Logging Imports
 const apiLimiter = require("./middleware/rateLimiter");
 const errorHandler = require("./middleware/errorHandler");
 const logger = require("./utils/logger");
 
 const Booking = require('./models/Booking');
 const Room = require('./models/Room');
+const connectDB = require("./config/db");
 
-// Cron Job (Existing)
+// Routes Imports
+const authRoutes = require("./routes/authRoutes");
+const roomRoutes = require("./routes/roomRoutes");
+const bookingRoutes = require("./routes/bookingRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const authMiddleware = require("./middleware/authMiddleware");
+
+const app = express();
+
+// ✨ Security Middlewares
+app.use(helmet()); 
+app.use('/api', apiLimiter); 
+
+// Existing Middlewares
+app.use(cors());
+app.use(express.json());
+
+// DB connect
+connectDB();
+
+// Cron Job
 cron.schedule('*/10 * * * *', async () => {
   const now = new Date();
   const expired = await Booking.find({ 
@@ -28,27 +49,7 @@ cron.schedule('*/10 * * * *', async () => {
   }
 });
 
-const connectDB = require("./config/db");
-const authRoutes = require("./routes/authRoutes");
-const authMiddleware = require("./middleware/authMiddleware");
-const roomRoutes = require("./routes/roomRoutes");
-const bookingRoutes = require("./routes/bookingRoutes");
-const adminRoutes = require("./routes/adminRoutes");
-
-const app = express();
-
-// ✨ [PHASE 1] Security Middlewares (Sabse upar)
-app.use(helmet()); 
-app.use('/api', apiLimiter); 
-
-// Existing Middlewares
-app.use(cors());
-app.use(express.json());
-
-// DB connect
-connectDB();
-
-// Routes
+// Routes Use
 app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/book", bookingRoutes);
@@ -65,7 +66,7 @@ app.get("/api/protected", authMiddleware, (req, res) => {
   });
 });
 
-// ✨ [PHASE 1] Cloudinary Test Route (Postman se image yahan bhejenge)
+// Cloudinary Test Route
 const upload = require('./middleware/uploadMiddleware');
 app.post('/api/upload-test', upload.single('image'), (req, res) => {
   if (!req.file) {
@@ -73,17 +74,16 @@ app.post('/api/upload-test', upload.single('image'), (req, res) => {
   }
   res.status(200).json({
     success: true,
-    message: 'File successfully uploaded to Cloudinary! ☁️🚀',
-    fileUrl: req.file.path // Yeh live URL dega
+    message: 'File successfully uploaded! ☁️🚀',
+    fileUrl: req.file.path
   });
 });
 
-// ✨ [PHASE 1] Logger Test Route
 app.get('/test-error', (req, res) => {
-  throw new Error("Yeh ek test error hai logger check karne ke liye!");
+  throw new Error("Test error for logger!");
 });
 
-// ✨ [PHASE 1] Global Error Handler (SABSE AAKHRI MIDDLEWARE!)
+// Global Error Handler
 app.use(errorHandler);
 
 // Server start

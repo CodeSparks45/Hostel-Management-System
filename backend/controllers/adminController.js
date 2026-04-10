@@ -32,7 +32,33 @@ const getAllUsers = async (req, res) => {
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }const Room = require("../models/Room");
+const User = require("../models/User");
+
+// ✅ DELETE ROOM
+const deleteRoom = async (req, res) => {
+  try {
+    await Room.findByIdAndDelete(req.params.id);
+    res.json({ message: "Room deleted 🗑️" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
+};
+
+// ✅ GET ALL USERS
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = {
+  deleteRoom,
+  getAllUsers,
+};
 };
 
 module.exports = {

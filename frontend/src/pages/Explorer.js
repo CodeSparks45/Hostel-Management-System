@@ -41,13 +41,16 @@ export default function Explorer() {
 
   const roomImages = [boys1, boys2, boys3];
 
-  const handleSecureCheckout = () => {
-    const loadingToast = toast.loading("Connecting to SBI Secure Servers...");
-    setTimeout(() => {
-      toast.dismiss(loadingToast);
-      navigate(`/payment-gateway/${id || 'sahyadri-elite'}/450`);
-    }, 1500);
-  };
+
+
+const handleSecureCheckout = () => {
+  const loadingToast = toast.loading("Connecting to SBI Secure Servers...");
+  setTimeout(() => {
+    toast.dismiss(loadingToast);
+    // ✅ Pass hostel id properly — used in SBCollect for pre-filling
+    navigate(`/payment-gateway/${id || "sahyadri-elite"}/450`);
+  }, 1500);
+};
 
   return (
     <div className="min-h-screen bg-sky-50/50 font-sans text-slate-800 pb-24">

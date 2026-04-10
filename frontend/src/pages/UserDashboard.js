@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react"; // Added useContext
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -7,15 +7,16 @@ import {
   ArrowUpRight, X, Send, CalendarCheck, BadgeCheck, Siren, Bot, Clock, AlertCircle, Lock
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { ThemeContext } from "../context/ThemeContext"; // Added ThemeContext
 
 import SggsLogo from "./sggs-logo.png"; 
 
 export default function UserDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const { theme, toggleTheme } = useContext(ThemeContext); // Use ThemeContext
   
   // 🚀 THE EXTRA-ORDINARY FEATURE: Dynamic State Management
-  // "none" = No application, "pending" = Waiting for Rector, "approved" = Room Allocated
   const [bookingState, setBookingState] = useState("pending"); 
 
   const [activeModal, setActiveModal] = useState(null); 
@@ -38,14 +39,12 @@ export default function UserDashboard() {
     navigate("/login");
   };
 
-  // ADDED MISSING FUNCTION 1
   const handleSkipMeal = (e) => {
     e.stopPropagation(); 
     setMealSkipped(true);
     toast.success("Meal skipped! You just saved food wastage. 🌿");
   };
 
-  // ADDED MISSING FUNCTION 2
   const submitTicket = (e) => {
     e.preventDefault();
     toast.success("Maintenance ticket submitted successfully! 🛠️");
@@ -209,12 +208,20 @@ export default function UserDashboard() {
             </p>
           </motion.div>
           <div className="flex gap-3">
-             <button className="w-12 h-12 bg-white rounded-2xl border border-sky-100 shadow-sm flex items-center justify-center text-slate-400">
-               <Bell size={20} />
-             </button>
-             <div onClick={() => navigate('/complete-profile')} className="hidden md:flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-sky-100 shadow-sm cursor-pointer">
-                <div className="w-8 h-8 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center font-black">{user.name.charAt(0).toUpperCase()}</div>
-             </div>
+              {/* ✨ DARK MODE TOGGLE BUTTON ADDED HERE */}
+              <button 
+                onClick={toggleTheme}
+                className="w-12 h-12 bg-white rounded-2xl border border-sky-100 shadow-sm flex items-center justify-center text-slate-400 hover:text-sky-500 transition-all"
+              >
+                {theme === 'dark' ? '☀️' : '🌙'}
+              </button>
+
+              <button className="w-12 h-12 bg-white rounded-2xl border border-sky-100 shadow-sm flex items-center justify-center text-slate-400">
+                <Bell size={20} />
+              </button>
+              <div onClick={() => navigate('/complete-profile')} className="hidden md:flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-sky-100 shadow-sm cursor-pointer">
+                 <div className="w-8 h-8 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center font-black">{user.name.charAt(0).toUpperCase()}</div>
+              </div>
           </div>
         </header>
 

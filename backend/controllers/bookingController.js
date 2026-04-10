@@ -1,6 +1,9 @@
 const Booking = require("../models/Booking");
 const Room = require("../models/Room");
 
+// ✨ NAYA IMPORT: Email Service ko yahan bulaya
+const { sendApprovalEmail } = require("../utils/emailService");
+
 // ✅ 1. CREATE BOOKING REQUEST (Status: Pending)
 const bookRoom = async (req, res) => {
   try {
@@ -19,7 +22,7 @@ const bookRoom = async (req, res) => {
       user: req.user.id,
       room: roomId,
       hostelName: hostelName,
-      duNumber: duNumber, // User SBI Collect se yaha reference ID dalega
+      duNumber: duNumber, 
       paymentStatus: "pending",
       status: "active"
     });
@@ -40,11 +43,13 @@ const getMyBookings = async (req, res) => {
   }
 };
 
-// ✅ 3. APPROVE BOOKING (Used by Rector/Admin)
+// ✅ 3. APPROVE BOOKING & SEND EMAIL (Used by Rector/Admin)
 const approveBooking = async (req, res) => {
   try {
     const { id } = req.params; // Booking ID
-    const booking = await Booking.findById(id);
+    
+    // ⚠️ NAYA CHANGE: .populate("user") add kiya taaki hume student ka email mil sake
+    const booking = await Booking.findById(id).populate("user");
 
     if (!booking) return res.status(404).json({ message: "Booking Request not found" });
 
@@ -65,12 +70,21 @@ const approveBooking = async (req, res) => {
 
     // Update Booking Status
     booking.paymentStatus = "approved";
+    booking.status = "approved"; // Ensuring main status is also approved
     booking.checkInTime = checkIn;
     booking.checkOutTime = checkOut;
     await booking.save();
 
-    res.json({ message: "Booking Approved! Timer Started. ✅", booking });
+    // 🚀 THE MAGIC: EMAIL BHEJNE KA LOGIC
+    const user = booking.user;
+    if (user && user.email) {
+      // Room number bhej rahe hain (agar aapke Room schema mein 'number' field hai toh, warna room ka ID jayega)
+      await sendApprovalEmail(user.email, user.name, room.number || "Assigned by Admin");
+    }
+
+    res.json({ message: "Booking Approved! Timer Started & Email Sent. ✅🚀", booking });
   } catch (err) {
+    console.error("❌ Error in approval:", err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -78,5 +92,5 @@ const approveBooking = async (req, res) => {
 module.exports = {
   bookRoom,
   getMyBookings,
-  approveBooking // Ise naya add kiya hai
+  approveBooking 
 };
