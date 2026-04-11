@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
+import API from "../services/api"; // ✅ API Imported
 import { 
   Wifi, Coffee, Shield, MapPin, Star, ArrowLeft, 
   Navigation, Users, Clock, Camera, ChevronRight,
@@ -41,16 +42,24 @@ export default function Explorer() {
 
   const roomImages = [boys1, boys2, boys3];
 
+  // ✅ UPDATED FUNCTION WITH REAL MONGODB ID
+  const handleSecureCheckout = () => {
+    // User logged in hai?
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login first to book a room!");
+      navigate("/login");
+      return;
+    }
 
-
-const handleSecureCheckout = () => {
-  const loadingToast = toast.loading("Connecting to SBI Secure Servers...");
-  setTimeout(() => {
-    toast.dismiss(loadingToast);
-    // ✅ Pass hostel id properly — used in SBCollect for pre-filling
-    navigate(`/payment-gateway/${id || "sahyadri-elite"}/450`);
-  }, 1500);
-};
+    // Room ID URL se uthao, agar URL mein nahi hai toh Asli MongoDB _id use karo
+    const loadingToast = toast.loading("Connecting to SBI Secure Servers...");
+    setTimeout(() => {
+      toast.dismiss(loadingToast);
+      // 👇 YAHAN AAPKI ASLI ID DAAL DI HAI
+      navigate(`/payment-gateway/${id || "69da21dd6d5378e548685ab8"}/450`);
+    }, 1500);
+  };
 
   return (
     <div className="min-h-screen bg-sky-50/50 font-sans text-slate-800 pb-24">

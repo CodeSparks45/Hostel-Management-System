@@ -11,15 +11,12 @@ const ALLOWED_GENDERS = ["male", "female"];
 // =====================
 exports.signup = async (req, res) => {
   try {
-    let { name, email, password, role, gender } = req.body;
+    // 🔥 FIX 1: Frontend se phone number bhi catch karo
+    let { name, email, password, role, gender, phone } = req.body;
 
-    // 🔥 SANITIZE INPUT (MOST IMPORTANT FIX)
+    // 🔥 SANITIZE INPUT
     role = role?.toLowerCase().trim();
     gender = gender?.toLowerCase().trim();
-
-    // 🔍 DEBUG (optional - remove later)
-    console.log("Incoming role:", role);
-    console.log("Incoming gender:", gender);
 
     // ❌ Validation
     if (!name || !email || !password || !role || !gender) {
@@ -47,7 +44,9 @@ exports.signup = async (req, res) => {
       password: hashedPassword,
       role,
       gender,
-      profileCompleted: false,
+      phone, // ✅ Phone DB mein save ho raha hai
+      // 🔥 FIX 2: Isko true kar diya taaki login karte hi rooms unlock ho jayein (kyunki saari detail form mein bhar di hai)
+      profileCompleted: true, 
     });
 
     res.status(201).json({
@@ -57,6 +56,7 @@ exports.signup = async (req, res) => {
         name: user.name,
         role: user.role,
         gender: user.gender,
+        phone: user.phone,
         profileCompleted: user.profileCompleted
       }
     });
@@ -93,6 +93,7 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    // ✅ FIX 3: Login response mein sab kuch properly bhej rahe hain
     res.status(200).json({
       message: "Login successful",
       token,
@@ -101,7 +102,8 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        gender: user.gender,
+        gender: user.gender, // Yeh frontend pe lock logic ke liye zaroori hai
+        phone: user.phone,
         profileCompleted: user.profileCompleted
       },
     });

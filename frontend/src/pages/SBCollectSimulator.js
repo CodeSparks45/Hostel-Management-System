@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircle2, ArrowRight, Download, ShieldCheck } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import API from "../services/api";
 
 export default function SBCollectSimulator() {
   const { id, amount } = useParams();
@@ -54,16 +55,30 @@ export default function SBCollectSimulator() {
   };
 
   const handleProceedToVerify = () => {
-    // ✅ Navigate to VerifyPayment with DU number pre-filled via state
-    navigate("/verify-payment", {
-      state: {
-        duNumber: duNumber,
-        name: formData.name,
-        amount: amount || "450",
-        hostelId: id,
-      },
-    });
+  // localStorage mein payment session save karo (VerifyPayment padh lega)
+  const paymentSession = {
+    duNumber:    duNumber,
+    name:        formData.name,
+    designation: formData.designation,
+    amount:      amount || "450",
+    hostelId:    id,       // ye MongoDB Room _id hona chahiye
+    hostelName:  instName === "SGGSIE&T" ? "Sahyadri" : "Sahyadri",
+    purpose:     formData.purpose,
+    mobile:      formData.mobile,
+    timestamp:   new Date().toLocaleString(),
   };
+  localStorage.setItem("lastPaymentSession", JSON.stringify(paymentSession));
+
+  navigate("/verify-payment", {
+    state: {
+      duNumber:  duNumber,
+      name:      formData.name,
+      amount:    amount || "450",
+      hostelId:  id,
+      hostelName: "Sahyadri",
+    },
+  });
+};
 
   return (
     <div className="min-h-screen bg-[#f4f4f4] font-sans text-[#333]">

@@ -1,0 +1,18 @@
+// Factory function — role pass karo, middleware milega
+const requireRole = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required." });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        message: `Access Denied. Required: [${allowedRoles.join(", ")}]. You are: ${req.user.role} ❌` 
+      });
+    }
+
+    next(); // Sahi role hai, aage jao
+  };
+};
+
+module.exports = requireRole;

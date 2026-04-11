@@ -1,30 +1,37 @@
-const express = require("express");
-const router = express.Router();
-const { 
-  bookRoom, 
-  getMyBookings 
-} = require("../controllers/bookingController");
+const express    = require("express");
+const router     = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
+const requireRole    = require("../middleware/roleMiddleware");
 
-// Sare routes protected hain (authMiddleware)
-router.post("/", authMiddleware, bookRoom);
-router.get("/my", authMiddleware, getMyBookings);
+const {
+  bookRoom,
+  getMyBookings,
+  getAllBookings,
+  approveBooking,
+  rejectBooking,
+  updateReceipt,
+} = require("../controllers/bookingController");
 
-// Agar aap delete functionality use kar rahe hain toh check karein controller mein hai ya nahi
-// Filhal ise comment kar dete hain crash rokne ke liye
-// router.delete("/:id", authMiddleware, cancelBooking); 
+// ── User Routes (Login hona chahiye) ─────────────────────────────
+router.post("/",           authMiddleware, bookRoom);          // Room book karo
+router.get("/my",          authMiddleware, getMyBookings);     // Apni bookings dekho
+router.patch("/receipt/:id", authMiddleware, updateReceipt);  // Receipt URL save karo
+
+// ── Rector / Admin Routes ─────────────────────────────────────────
+router.get("/all",         
+  authMiddleware, 
+  requireRole("admin", "rector", "principal"), 
+  getAllBookings
+);
+router.patch("/approve/:id", 
+  authMiddleware, 
+  requireRole("admin", "rector", "principal"), 
+  approveBooking
+);
+router.patch("/reject/:id",  
+  authMiddleware, 
+  requireRole("admin", "rector", "principal"), 
+  rejectBooking
+);
 
 module.exports = router;
-router.post("/confirm-payment", authMiddleware, async (req, res) => {
-  const { duNumber, roomId, hostelName } = req.body;
-  // Automatically create a booking with "approved" status because AI verified the DU format
-  const booking = await Booking.create({
-    user: req.user.id,
-    room: roomId,
-    duNumber,
-    paymentStatus: "approved", // Load reducer!
-    checkInTime: new Date(),
-    checkOutTime: new Date(Date.now() + 24*60*60*1000) 
-  });
-  res.json(booking);
-});

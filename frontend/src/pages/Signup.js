@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Mail, Lock, Eye, EyeOff, AlertCircle, 
   Loader2, User, UserPlus, ShieldCheck, 
-  Briefcase, VenusAndMars, ChevronDown
+  Briefcase, VenusAndMars, ChevronDown, Phone // ✅ Phone icon added
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import API from "../services/api";
@@ -26,6 +26,7 @@ import PremiumBoy from "./boy_pic.jpg";
 const signupSchema = z.object({
   name: z.string().min(1, "Full Name is required").max(50),
   email: z.string().min(1, "Email is required").email("Enter institutional email"),
+  phone: z.string().min(10, "Valid 10-digit mobile number required").max(15, "Invalid mobile number"), // ✅ Phone validation added
   password: z.string().min(8, "Security protocol requires 8+ characters"),
   role: z.enum(["professor", "hod", "principal", "guest"], {
     errorMap: () => ({ message: "Please select your designation" }),
@@ -97,7 +98,7 @@ export default function SignupPage() {
   const { register, handleSubmit, formState: { errors } } = useForm({ 
     resolver: zodResolver(signupSchema) 
   });
-  const roles = ["guest","professor","hod","principal","admin",];
+  
   const onSubmit = async (data) => {
     setLoading(true);
     try {
@@ -117,7 +118,7 @@ export default function SignupPage() {
 
       <div className="w-full max-w-6xl grid md:grid-cols-2 bg-white rounded-[2.5rem] overflow-hidden shadow-2xl border border-sky-100">
         
-        {/* LEFT SIDE - Premium 3D Display (Matches Login Page) */}
+        {/* LEFT SIDE - Premium 3D Display */}
         <div className="hidden md:flex relative items-center justify-center bg-gradient-to-br from-sky-100 via-white to-teal-50 overflow-hidden">
           
           <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-sky-200/50 blur-[100px] rounded-full pointer-events-none" />
@@ -205,15 +206,22 @@ export default function SignupPage() {
         <div className="flex flex-col justify-center px-8 md:px-16 py-12 bg-white max-h-[90vh] overflow-y-auto">
           <div className="max-w-sm w-full mx-auto">
             
-            <header className="mb-8 text-center flex flex-col items-center">
+            <header className="mb-6 text-center flex flex-col items-center">
               <img 
                 src={SggsLogo} 
                 alt="SGGS Logo" 
-                className="w-20 object-contain mb-4 drop-shadow-sm"
+                className="w-16 object-contain mb-3 drop-shadow-sm"
               />
-              <h1 className="text-2xl font-extrabold text-slate-800 mb-1 uppercase tracking-wide">Hostel Enrollment</h1>
+              <h1 className="text-xl font-extrabold text-slate-800 mb-1 uppercase tracking-wide">Hostel Enrollment</h1>
               <p className="text-slate-400 text-xs font-bold tracking-widest uppercase">Secure Gateway</p>
             </header>
+
+            {/* ✅ NEW DISCLAIMER ADDED */}
+            <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 mb-6">
+               <p className="text-[10px] text-sky-600 font-bold text-center uppercase tracking-wide leading-relaxed">
+                 ⚠️ Enter proper Email and Mobile Number to receive booking related updates and alerts.
+               </p>
+            </div>
 
             <form onSubmit={handleSubmit(onSubmit)}>
               
@@ -221,6 +229,9 @@ export default function SignupPage() {
               
               <InputField id="email" label="Official Email" icon={Mail} type="email" placeholder="user@sggs.ac.in" error={errors.email?.message} {...register("email")} />
               
+              {/* ✅ NEW PHONE FIELD ADDED */}
+              <InputField id="phone" label="Mobile Number" icon={Phone} type="tel" placeholder="+91 98765 43210" error={errors.phone?.message} {...register("phone")} />
+
               <InputField id="role" label="Designation" icon={Briefcase} isSelect error={errors.role?.message} {...register("role")}>
                 <option value="" disabled className="text-slate-300">Select Professional Role</option>
                 <option value="professor">Faculty / Professor</option>
@@ -229,10 +240,11 @@ export default function SignupPage() {
                 <option value="guest">Visiting Guest</option>
               </InputField>
 
+              {/* ✅ GENDER OPTIONS SIMPLIFIED */}
               <InputField id="gender" label="Gender Allocation" icon={VenusAndMars} isSelect error={errors.gender?.message} {...register("gender")}>
                 <option value="" disabled className="text-slate-300">Select Gender</option>
-                <option value="male">Male (Sahyadri Hostel)</option>
-                <option value="female">Female (Nandgiri Hostel)</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
               </InputField>
 
               <InputField id="password" label="Security Password" icon={Lock} type={showPw ? "text" : "password"} placeholder="••••••••" error={errors.password?.message} {...register("password")}
@@ -254,7 +266,7 @@ export default function SignupPage() {
               </motion.button>
             </form>
 
-            <div className="text-center mt-8">
+            <div className="text-center mt-6">
               <p className="text-sm text-slate-400 font-medium">
                 Already registered?{" "}
                 <Link to="/login" className="text-sky-500 font-bold hover:underline ml-1">
@@ -263,7 +275,7 @@ export default function SignupPage() {
               </p>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-slate-100 flex justify-center items-center gap-2 text-slate-400">
+            <div className="mt-6 pt-4 border-t border-slate-100 flex justify-center items-center gap-2 text-slate-400">
               <ShieldCheck size={16} className="text-sky-500" />
               <span className="text-[10px] font-bold tracking-widest uppercase">SGGSIE&T Official Portal</span>
             </div>

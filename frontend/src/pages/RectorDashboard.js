@@ -8,12 +8,14 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import axios from "axios"; 
+import API from "../services/api"; // ✅ Real API Import
 
 export default function RectorDashboard() {
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState("Overview");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRequest, setSelectedRequest] = useState(null); // for detail modal
+  const [selectedRequest, setSelectedRequest] = useState(null);
   const [requests, setRequests] = useState([]);
 
   // ─── Room pool for allocation ───
@@ -25,30 +27,6 @@ export default function RectorDashboard() {
     { room: "V-01",  hostel: "VIP Wing"  },
     { room: "V-02",  hostel: "VIP Wing"  },
   ];
-
-  // ─── Sync from localStorage every 2s ───
-  useEffect(() => {
-    const syncRequests = () => {
-      const stored = JSON.parse(localStorage.getItem("pendingRequests")) || [
-        {
-          id: "DUJ192837", name: "Dr. Anjali Patil",
-          designation: "HOD, Computer Science", date: "Today, 10:30 AM",
-          receipt: "sbi_receipt_1.pdf", amount: "450",
-          purpose: "Faculty Development Program", status: "pending"
-        },
-        {
-          id: "DUJ998273", name: "Mr. Sharma",
-          designation: "AICTE Inspector", date: "Today, 11:15 AM",
-          receipt: "sbi_receipt_2.pdf", amount: "450",
-          purpose: "Annual Inspection", status: "pending"
-        }
-      ];
-      setRequests(stored);
-    };
-    syncRequests();
-    const interval = setInterval(syncRequests, 2000);
-    return () => clearInterval(interval);
-  }, []);
 
   const [guests, setGuests] = useState([
     { id: "EMP-2041", name: "Prof. Arvind Kumar", designation: "Faculty", block: "Sahyadri", room: "S-102", status: "In Campus", checkin: "10 Apr 2026", checkout: "12 Apr 2026" },
@@ -64,106 +42,85 @@ export default function RectorDashboard() {
     { number: "V-02",  type: "VIP Suite",     occupied: 0, capacity: 2, status: "Maintenance" },
   ]);
 
-  // ─── APPROVE ───
-  const handleApprove = (reqId) => {
-    const req = requests.find(r => r.id === reqId);
-    if (!req) return;
+  // ── 1. REAL API FETCH EFFECT ─────────────────────────────────────
+  useEffect(() => {
+    fetchPendingBookings();
+    const interval = setInterval(fetchPendingBookings, 10000); // Har 10s mein refresh
+    return () => clearInterval(interval);
+  }, []);
 
-    // Auto-assign a room
-    const freeRoom = availableRooms[Math.floor(Math.random() * availableRooms.length)];
-    const checkin = new Date();
-    const checkout = new Date(checkin);
-    checkout.setDate(checkout.getDate() + 1);
+  const fetchPendingBookings = async () => {
+    try {
+      const res = await API.get("/api/book/all?status=pending");
+      // MongoDB data ko Rector Dashboard format mein convert karo
+      const formatted = res.data.map(b => ({
+        id:          b._id,           // MongoDB _id
+        duNumber:    b.duNumber,      // SBI DU Number
+        name:        b.user?.name    || "Unknown",
+        email:       b.user?.email   || "",
+        designation: b.user?.role    || "Guest",
+        date:        new Date(b.createdAt).toLocaleString("en-IN"),
+        receipt:     b.receiptUrl    || null,
+        amount:      b.room?.pricePerDay || 450,
+        hostelName:  b.hostelName,
+        purpose:     b.purpose       || "Official Visit",
+      }));
+      setRequests(formatted);
+    } catch (err) {
+      console.error("Fetch pending bookings failed:", err.message);
+      // Agar API fail ho toh empty rakhenge — no dummy data
+      setRequests([]);
+    }
+  };
 
-    const checkinStr = checkin.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) + " — 2:00 PM";
-    const checkoutStr = checkout.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) + " — 11:00 AM";
-
-    // ✅ Simulate email notification toast
-    toast.custom((t) => (
-      <div className={`${t.visible ? "animate-enter" : "animate-leave"} max-w-md w-full bg-white shadow-lg rounded-2xl pointer-events-auto flex border border-emerald-100`}>
-        <div className="flex-1 p-4">
+  // ── 2. REAL API APPROVE LOGIC ────────────────────────────────────
+  const handleApprove = async (mongoId) => {
+    try {
+      const res = await API.patch(`/api/book/approve/${mongoId}`);
+      toast.custom((t) => (
+        <div className={`${t.visible ? "animate-enter" : "animate-leave"} max-w-md w-full bg-white shadow-lg rounded-2xl pointer-events-auto flex border border-emerald-100 p-4`}>
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
               <Mail size={20} className="text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm font-extrabold text-slate-800">Email Sent to {req.name}</p>
+              <p className="text-sm font-extrabold text-slate-800">
+                ✅ {res.data.booking?.user?.name} — Approved!
+              </p>
               <p className="text-xs text-slate-500 mt-1">
-                Room <strong>{freeRoom.room}</strong> in <strong>{freeRoom.hostel}</strong> Hostel<br />
-                Check-in: {checkinStr}<br />
-                Check-out: {checkoutStr}
+                Room <strong>{res.data.booking?.roomNumber}</strong> — {res.data.booking?.hostelName}<br />
+                {res.data.message}
               </p>
             </div>
           </div>
+          <button onClick={() => toast.dismiss(t.id)} className="ml-auto text-slate-400 hover:text-slate-600 pl-2">✕</button>
         </div>
-        <button onClick={() => toast.dismiss(t.id)} className="p-4 text-slate-400 hover:text-slate-600">✕</button>
-      </div>
-    ), { duration: 6000 });
+      ), { duration: 8000 });
 
-    // ✅ Update myBookings in localStorage with approved data
-    const myBookings = JSON.parse(localStorage.getItem("myBookings")) || [];
-    const updatedBookings = myBookings.map(b => {
-      if (b.id === reqId) {
-        return {
-          ...b,
-          bookingStatus: "approved",
-          roomNumber: freeRoom.room,
-          hostelName: freeRoom.hostel,
-          checkin: checkinStr,
-          checkout: checkoutStr,
-          approvedAt: new Date().toISOString(),
-          qrEnabled: true,
-        };
-      }
-      return b;
-    });
-    localStorage.setItem("myBookings", JSON.stringify(updatedBookings));
+      // List se remove karo
+      setRequests(prev => prev.filter(r => r.id !== mongoId));
 
-    // ✅ Add to Logbook
-    const newGuest = {
-      id: reqId,
-      name: req.name,
-      designation: req.designation,
-      block: freeRoom.hostel,
-      room: freeRoom.room,
-      status: "In Campus",
-      checkin: checkin.toLocaleDateString("en-IN"),
-      checkout: checkout.toLocaleDateString("en-IN"),
-    };
-    setGuests(prev => [newGuest, ...prev]);
-
-    // ✅ Update Room Matrix
-    setRooms(prev => prev.map(r => r.number === freeRoom.room ? { ...r, occupied: r.occupied + 1, status: r.occupied + 1 >= r.capacity ? "Full" : r.status } : r));
-
-    // ✅ Remove from pending queue
-    const updatedReqs = requests.filter(r => r.id !== reqId);
-    setRequests(updatedReqs);
-    localStorage.setItem("pendingRequests", JSON.stringify(updatedReqs));
-
-    toast.success(`✅ Approved! Room ${freeRoom.room} allocated to ${req.name}`, {
-      style: { borderRadius: "12px", background: "#ecfdf5", color: "#059669", fontWeight: "bold" },
-      duration: 4000
-    });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Approval failed. Try again.");
+    }
   };
 
-  // ─── REJECT ───
-  const handleReject = (reqId) => {
-    const req = requests.find(r => r.id === reqId);
-
-    // Update myBookings
-    const myBookings = JSON.parse(localStorage.getItem("myBookings")) || [];
-    const updatedBookings = myBookings.map(b =>
-      b.id === reqId ? { ...b, bookingStatus: "rejected", rejectedAt: new Date().toISOString() } : b
+  // ── 3. REAL API REJECT LOGIC ─────────────────────────────────────
+  const handleReject = async (mongoId) => {
+    const reason = window.prompt(
+      "Rejection reason likhein (optional — user ko email jayega):",
+      "Documents verify nahi ho sake."
     );
-    localStorage.setItem("myBookings", JSON.stringify(updatedBookings));
 
-    const updatedReqs = requests.filter(r => r.id !== reqId);
-    setRequests(updatedReqs);
-    localStorage.setItem("pendingRequests", JSON.stringify(updatedReqs));
-
-    toast.error(`❌ Rejected — ${req?.name || "Request"} has been notified.`, {
-      style: { borderRadius: "12px", background: "#fff1f2", color: "#e11d48", fontWeight: "bold" }
-    });
+    try {
+      await API.patch(`/api/book/reject/${mongoId}`, { 
+        reason: reason || "Rector ne manually reject kiya." 
+      });
+      toast.error("❌ Rejected. User ko email notification bhej di.");
+      setRequests(prev => prev.filter(r => r.id !== mongoId));
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Rejection failed. Try again.");
+    }
   };
 
   const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
@@ -333,12 +290,18 @@ export default function RectorDashboard() {
                               <td className="px-6 py-5 text-xs text-slate-500">{req.purpose || "—"}</td>
                               <td className="px-6 py-5 text-xs text-slate-500 font-medium">{req.date}</td>
                               <td className="px-6 py-5">
-                                <button
-                                  onClick={() => toast(`Viewing: ${req.receipt}`)}
-                                  className="flex items-center gap-1.5 text-sky-600 bg-sky-50 px-3 py-1.5 rounded-lg border border-sky-100 font-bold text-xs hover:bg-sky-100"
-                                >
-                                  <Eye size={12} /> View
-                                </button>
+                                {req.receipt ? (
+                                  <a
+                                    href={req.receipt}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex w-max items-center gap-1.5 text-sky-600 bg-sky-50 px-3 py-1.5 rounded-lg border border-sky-100 font-bold text-xs hover:bg-sky-100"
+                                  >
+                                    <Eye size={12} /> View
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-slate-400 font-medium">No Receipt</span>
+                                )}
                               </td>
                               <td className="px-6 py-5">
                                 <div className="flex justify-end gap-2">

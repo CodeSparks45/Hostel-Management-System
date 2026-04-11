@@ -22,6 +22,11 @@ const authMiddleware = require("./middleware/authMiddleware");
 
 const app = express();
 
+// CORS FIX: Allow Frontend to talk to Backend
+app.use(cors({
+  origin: "http://localhost:3000", // Tumhare React app ka URL
+  credentials: true
+}));
 // ✨ Security Middlewares
 app.use(helmet()); 
 app.use('/api', apiLimiter); 
@@ -54,6 +59,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/book", bookingRoutes);
 app.use("/api/admin", adminRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("Server chal raha hai 🚀");

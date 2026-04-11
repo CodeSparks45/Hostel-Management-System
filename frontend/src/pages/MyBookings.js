@@ -7,37 +7,68 @@ import {
   CheckCircle2, Clock, FileText, Activity, AlertCircle, X
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import API from "../services/api"; // ✅ Real API Import
 
 export default function MyBookings() {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showQR, setShowQR] = useState(null); // booking id for QR modal
+  const [showQR, setShowQR] = useState(null); // booking _id for QR modal
   const user = JSON.parse(localStorage.getItem("user")) || { name: "Guest Scholar" };
 
-  // ✅ Load from localStorage (set by VerifyPayment & updated by RectorDashboard)
+  // ── REAL API FETCH EFFECT ─────────────────────────────────────────
   useEffect(() => {
-    const loadBookings = () => {
-      const stored = JSON.parse(localStorage.getItem("myBookings")) || [];
-      setBookings(stored);
-      setLoading(false);
-    };
-    loadBookings();
-    // Refresh every 3 seconds to catch rector approvals
-    const interval = setInterval(loadBookings, 3000);
+    fetchMyBookings();
+    // Har 8 second mein auto-refresh — Rector approve kare to update dikhega
+    const interval = setInterval(fetchMyBookings, 8000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchMyBookings = async () => {
+    try {
+      const res = await API.get("/api/book/my");
+      setBookings(res.data); // Real MongoDB data
+    } catch (err) {
+      console.error("MyBookings fetch failed:", err.message);
+      if (err?.response?.status === 401) {
+        navigate("/login"); // Token expire
+      }
+      // Error pe empty array — no dummy data
+      setBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const item = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
   };
 
+  // ── Tracker logic (UPDATED TO CHECK ALL POSSIBLE FIELDS) ────────
   const getTrackerStatus = (booking) => {
-    if (!booking) return { app: "done", pay: "done", room: "pending", checkin: "pending" };
-    if (booking.bookingStatus === "approved") return { app: "done", pay: "done", room: "done", checkin: "active" };
-    if (booking.bookingStatus === "rejected") return { app: "done", pay: "done", room: "rejected", checkin: "pending" };
-    return { app: "done", pay: "done", room: "pending", checkin: "pending" };
+    if (!booking) return { app: "pending", pay: "pending", room: "pending", checkin: "pending" };
+    
+    // 🔥 THE FIX: Database mein chahe `status` ho ya `paymentStatus`, dono pakdo!
+    const currentStatus = booking.paymentStatus || booking.status;
+
+    if (currentStatus === "approved") return { app: "done", pay: "done", room: "done",    checkin: "active"  };
+    if (currentStatus === "rejected") return { app: "done", pay: "done", room: "rejected", checkin: "pending" };
+    return { app: "done", pay: "done", room: "active", checkin: "pending" };
+  };
+
+  const latestBooking = bookings[0] || null;
+  // 🔥 THE FIX applied here too
+  const actualStatus = latestBooking?.paymentStatus || latestBooking?.status;
+  
+  const isApproved = actualStatus === "approved";
+  const isPending = actualStatus === "pending";
+  const isRejected = actualStatus === "rejected";
+
+  // Date Formatter Helper
+  const formatDate = (dateString) => {
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleDateString("en-IN");
   };
 
   if (loading) return (
@@ -45,12 +76,6 @@ export default function MyBookings() {
       Syncing StayPG Systems...
     </div>
   );
-
-  const latestBooking = bookings[0] || null;
-  const trackerStatus = getTrackerStatus(latestBooking);
-  const isApproved = latestBooking?.bookingStatus === "approved";
-  const isPending = latestBooking?.bookingStatus === "pending";
-  const isRejected = latestBooking?.bookingStatus === "rejected";
 
   return (
     <div className="min-h-screen bg-sky-50/50 font-sans flex text-slate-800 relative overflow-hidden">
@@ -120,7 +145,7 @@ export default function MyBookings() {
                   <Clock size={20} className="text-amber-500 flex-shrink-0" />
                   <div>
                     <p className="font-bold text-amber-800">Awaiting Rector Approval</p>
-                    <p className="text-xs text-amber-600 mt-0.5">DU Ref: <span className="font-mono font-black">{latestBooking.id}</span> — Receipt uploaded. Rector is reviewing your request.</p>
+                    <p className="text-xs text-amber-600 mt-0.5">DU Ref: <span className="font-mono font-black">{latestBooking.duNumber}</span> — Receipt uploaded. Rector is reviewing your request.</p>
                   </div>
                 </div>
               )}
@@ -128,8 +153,8 @@ export default function MyBookings() {
                 <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-6 py-4 flex items-center gap-3">
                   <CheckCircle2 size={20} className="text-emerald-500 flex-shrink-0" />
                   <div>
-                    <p className="font-bold text-emerald-800">✅ Room Approved! Welcome to {latestBooking.hostelName} Hostel</p>
-                    <p className="text-xs text-emerald-600 mt-0.5">Room {latestBooking.roomNumber} — Check-in: {latestBooking.checkin} | Check-out: {latestBooking.checkout}</p>
+                    <p className="font-bold text-emerald-800">✅ Room Approved! Welcome to {latestBooking.hostelName || "Sahyadri"} Hostel</p>
+                    <p className="text-xs text-emerald-600 mt-0.5">Room {latestBooking.roomNumber} — Check-in: {formatDate(latestBooking.checkInTime)} | Check-out: {formatDate(latestBooking.checkOutTime)}</p>
                   </div>
                 </div>
               )}
@@ -159,7 +184,7 @@ export default function MyBookings() {
               <TrackerStep
                 icon={<Building2 size={20} />}
                 title="Room Allocation"
-                desc={isApproved ? `${latestBooking?.hostelName} ${latestBooking?.roomNumber}` : isPending ? "Pending Approval" : isRejected ? "Rejected" : "Awaiting"}
+                desc={isApproved ? `${latestBooking?.hostelName || "Sahyadri"} ${latestBooking?.roomNumber}` : isPending ? "Pending Approval" : isRejected ? "Rejected" : "Awaiting"}
                 status={isApproved ? "done" : isRejected ? "rejected" : "active"}
               />
               <TrackerStep
@@ -182,7 +207,7 @@ export default function MyBookings() {
                     {isApproved ? "Active Stay" : isPending ? "Pending Review" : isRejected ? "Request Rejected" : "No Active Booking"}
                   </p>
                   <h3 className="text-3xl font-extrabold text-white tracking-tight">
-                    {isApproved ? latestBooking?.hostelName : isPending ? "Under Review" : "Book a Room"}
+                    {isApproved ? (latestBooking?.hostelName || "Sahyadri") : isPending ? "Under Review" : "Book a Room"}
                   </h3>
                   <p className="text-sm text-white/70 font-medium mt-1">SGGSIE&T Campus, Nanded</p>
                 </div>
@@ -201,11 +226,11 @@ export default function MyBookings() {
                 </div>
                 <div>
                   <p className="text-[10px] text-white/60 font-bold uppercase tracking-widest mb-1">Check-in</p>
-                  <p className="text-sm font-extrabold text-white">{isApproved ? latestBooking?.checkin?.split("—")[0] : "—"}</p>
+                  <p className="text-sm font-extrabold text-white">{isApproved ? formatDate(latestBooking?.checkInTime) : "—"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] text-white/60 font-bold uppercase tracking-widest mb-1">Check-out</p>
-                  <p className="text-sm font-extrabold text-white">{isApproved ? latestBooking?.checkout?.split("—")[0] : "—"}</p>
+                  <p className="text-sm font-extrabold text-white">{isApproved ? formatDate(latestBooking?.checkOutTime) : "—"}</p>
                 </div>
               </div>
             </motion.div>
@@ -215,7 +240,7 @@ export default function MyBookings() {
               {/* QR Pass button */}
               <button
                 onClick={() => {
-                  if (isApproved) setShowQR(latestBooking?.id);
+                  if (isApproved) setShowQR(latestBooking?._id);
                   else toast.error("QR Pass available only after Rector approval!");
                 }}
                 className={`rounded-[2rem] p-6 border flex items-center gap-5 transition-all hover:shadow-md ${isApproved ? "bg-white border-emerald-100 cursor-pointer hover:border-emerald-300" : "bg-white border-slate-100 opacity-60 cursor-not-allowed"}`}
@@ -268,12 +293,12 @@ export default function MyBookings() {
                 <div className="space-y-4">
                   {bookings.map((b, index) => (
                     <LedgerRow
-                      key={b.id || index}
-                      id={b.id}
-                      date={b.date}
-                      item={`${b.hostelName || "Sahyadri"} — ${b.purpose || "Guest Room"}`}
-                      amount={`₹${b.amount || "450"}`}
-                      bookingStatus={b.bookingStatus}
+                      key={b._id || index}
+                      id={b.duNumber}
+                      date={new Date(b.createdAt).toLocaleDateString("en-IN")}
+                      item={`${b.hostelName || "Sahyadri"} — ${b.room?.type || "Guest Room"}`}
+                      amount={`₹${b.room?.pricePerDay || 450}`}
+                      bookingStatus={b.paymentStatus || b.status} // 🔥 Fix here too
                       roomNumber={b.roomNumber}
                     />
                   ))}
@@ -319,19 +344,19 @@ export default function MyBookings() {
             <div className="bg-sky-50 rounded-2xl p-4 text-left space-y-2 mb-6 border border-sky-100">
               <div className="flex justify-between text-xs">
                 <span className="font-bold text-slate-500">DU Ref</span>
-                <span className="font-mono font-black text-sky-600">{latestBooking?.id}</span>
+                <span className="font-mono font-black text-sky-600">{latestBooking?.duNumber}</span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="font-bold text-slate-500">Room</span>
-                <span className="font-bold text-slate-800">{latestBooking?.roomNumber} — {latestBooking?.hostelName}</span>
+                <span className="font-bold text-slate-800">{latestBooking?.roomNumber} — {latestBooking?.hostelName || "Sahyadri"}</span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="font-bold text-slate-500">Check-in</span>
-                <span className="font-bold text-slate-800">{latestBooking?.checkin?.split("—")[0]}</span>
+                <span className="font-bold text-slate-800">{formatDate(latestBooking?.checkInTime)}</span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="font-bold text-slate-500">Valid till</span>
-                <span className="font-bold text-slate-800">{latestBooking?.checkout?.split("—")[0]}</span>
+                <span className="font-bold text-slate-800">{formatDate(latestBooking?.checkOutTime)}</span>
               </div>
             </div>
 
