@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Home as HomeIcon, Zap, CheckCircle2, Lock, LayoutDashboard, ArrowLeft, Wifi, Coffee } from "lucide-react";
+import { Home as  ArrowLeft, Wifi, Coffee } from "lucide-react";
 import toast from "react-hot-toast";
 import API from "../services/api";
 

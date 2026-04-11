@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Lock, Eye, CheckCircle, Star, Wifi, Wind, Coffee,
-  ChevronRight, Search, Bell, Sparkles, Calendar, Shield,
-  Zap, Building2, Users, MapPin, X, Filter, SlidersHorizontal,
-  ThumbsUp, ArrowRight
+   Search, Bell, Sparkles, Calendar, Shield,
+  Zap, Building2,  MapPin, X,  
+   ArrowRight
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Toaster } from "react-hot-toast";

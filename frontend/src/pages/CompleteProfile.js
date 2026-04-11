@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Phone, User, MapPin, ShieldAlert, ArrowRight, Loader2, BookOpen,
+  Phone, User, MapPin, ShieldAlert, ArrowRight, Loader2,
   CheckCircle2, Edit3, GraduationCap, Building2, Calendar, Briefcase,
   IdCard, UserCheck, AlertCircle
 } from "lucide-react";

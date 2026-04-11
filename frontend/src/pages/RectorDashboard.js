@@ -4,7 +4,7 @@ import {
   Users, AlertTriangle, CheckCircle, Search, Filter, Map,
   ShieldCheck, Building2, Check, X, LogOut, Settings, Clock,
   DoorOpen, UserCheck, ShieldAlert, FileText, Download, Briefcase,
-  Mail, QrCode, CalendarCheck, Eye, TrendingUp, Activity, Zap
+  Mail,  Eye,  Activity, Zap
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";

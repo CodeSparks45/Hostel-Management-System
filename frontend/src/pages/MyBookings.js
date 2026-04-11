@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  User, ShieldCheck, QrCode, LogOut, Settings, Home as HomeIcon,
+  User,  QrCode, LogOut, Settings, Home as HomeIcon,
   Building2, Bell, CalendarCheck, BadgeCheck, Siren, Download,
   CheckCircle2, Clock, FileText, Activity, AlertCircle, X, RefreshCw
 } from "lucide-react";

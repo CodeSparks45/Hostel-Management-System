@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   UploadCloud, FileText, CheckCircle2, ShieldAlert,
-  ArrowRight, Loader2, Clock, Building2, X, AlertCircle
+  ArrowRight, Loader2, Clock, Building2
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import API from "../services/api";

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Wifi, Coffee, Wind, Shield, Star, ArrowLeft,
-  Navigation, Clock, Camera, ChevronRight,
+  Navigation,  Camera, ChevronRight,
   CheckCircle2, Globe, Heart, Sparkles, HelpCircle, X, ListChecks,
   Thermometer, Bed, Building2, MapPin, ThumbsUp, MessageSquare
 } from "lucide-react";

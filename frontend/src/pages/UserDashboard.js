@@ -5,8 +5,8 @@ import {
   User, ShieldCheck, QrCode, LogOut, Settings, Home as HomeIcon, ChevronRight,
   Building2, Smartphone, GraduationCap, Utensils, Wrench, Bell,
   ArrowUpRight, X, Send, CalendarCheck, BadgeCheck, Siren, Bot, Clock,
-  AlertCircle, Lock, BarChart2, MapPin, Thermometer, BookOpen, Wifi,
-  Moon, Sun, Activity, TrendingUp, Coffee, Wind, Shield, Zap, Star
+  AlertCircle, Lock,  Wifi,
+  Moon, Sun, Activity,  Coffee, Wind, Shield, Zap, Star
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { ThemeContext } from "../context/ThemeContext";
