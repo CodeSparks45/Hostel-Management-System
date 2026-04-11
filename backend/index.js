@@ -24,7 +24,7 @@ const app = express();
 
 // CORS FIX: Allow Frontend to talk to Backend
 app.use(cors({
-  origin: "http://localhost:3000", // Tumhare React app ka URL
+  origin: true, // Yeh abhi ke liye sabko allow karega taaki Vercel se error na aaye
   credentials: true
 }));
 // ✨ Security Middlewares
