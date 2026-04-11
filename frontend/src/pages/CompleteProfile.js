@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Phone, CreditCard, User, HeartPulse,
-  MapPin, ShieldAlert, ArrowRight, Loader2, BookOpen,
-  CheckCircle2, Edit3, GraduationCap, Droplets, Building2, Calendar
+  Phone, User, MapPin, ShieldAlert, ArrowRight, Loader2, BookOpen,
+  CheckCircle2, Edit3, GraduationCap, Building2, Calendar, Briefcase,
+  IdCard, UserCheck, AlertCircle
 } from "lucide-react";
 import API from "../services/api";
 import toast, { Toaster } from "react-hot-toast";
@@ -15,18 +15,30 @@ export default function CompleteProfile() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   const [savedUser, setSavedUser] = useState(null);
+  
+  // Dynamic form state including role
   const [formData, setFormData] = useState({
-    phone: "", collegeId: "", gender: "male",
-    bloodGroup: "", guardianName: "", emergencyPhone: "",
-    address: "", course: "", year: ""
+    role: "student", // default role: 'student', 'staff', 'guest'
+    phone: "", 
+    emergencyPhone: "", 
+    address: "",
+    // Student specific
+    collegeId: "", course: "", year: "", guardianName: "",
+    // Staff specific
+    employeeId: "", department: "",
+    // Guest specific
+    idProof: "", purpose: ""
   });
 
-  // Check if profile already exists
+  // Load existing profile if available
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("user"));
-    if (stored?.collegeId && stored?.phone) {
+    // Check if user has basic required fields saved
+    if (stored && stored.phone) {
       setSavedUser(stored);
       setProfileSaved(true);
+      // Pre-fill form for edit mode
+      setFormData(prev => ({ ...prev, ...stored, role: stored.role || "student" }));
     }
   }, []);
 
@@ -34,11 +46,25 @@ export default function CompleteProfile() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await API.put("/api/auth/complete-profile", formData);
+      // Clean up payload based on role to avoid sending empty irrelevant fields
+      const payload = { ...formData };
+      if (payload.role !== 'student') {
+        delete payload.collegeId; delete payload.course; delete payload.year; delete payload.guardianName;
+      }
+      if (payload.role !== 'staff') {
+        delete payload.employeeId; delete payload.department;
+      }
+      if (payload.role !== 'guest') {
+        delete payload.idProof; delete payload.purpose;
+      }
+
+      const res = await API.put("/api/auth/complete-profile", payload);
       const updatedUser = res.data.user;
+      
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setSavedUser(updatedUser);
       toast.success("Profile secured! 🎉");
+      
       setTimeout(() => {
         setIsSubmitting(false);
         setProfileSaved(true);
@@ -49,174 +75,232 @@ export default function CompleteProfile() {
     }
   };
 
-  // ─── PROFILE VIEW ────────────────────────────────────────
+  // ─── PROFILE VIEW (MODERN DIGITAL ID CARD STYLE) ────────────────────────
   if (profileSaved && savedUser) {
     return (
-      <div className="min-h-screen bg-slate-50 font-sans">
+      <div className="min-h-screen bg-[#F8FAFC] font-sans pb-12">
         <Toaster position="top-right" />
 
-        {/* Header */}
-        <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-100 px-6 py-4 shadow-sm">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
+        {/* Premium Header */}
+        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4">
+          <div className="max-w-3xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={SggsLogo} alt="SGGS Logo" className="w-9 object-contain" />
+              <img src={SggsLogo} alt="SGGS Logo" className="w-10 object-contain drop-shadow-sm" />
               <div>
-                <p className="text-base font-extrabold text-slate-800 leading-none">StayPG</p>
-                <p className="text-[9px] font-bold text-sky-500 uppercase tracking-widest mt-1">Institutional</p>
+                <p className="text-lg font-extrabold text-slate-900 leading-none tracking-tight">StayPG</p>
+                <p className="text-[10px] font-bold text-sky-500 uppercase tracking-[0.2em] mt-1">Identity</p>
               </div>
             </div>
             <button onClick={() => setProfileSaved(false)}
-              className="flex items-center gap-2 bg-slate-50 hover:bg-sky-50 hover:text-sky-600 border border-slate-100 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 transition-all">
-              <Edit3 size={15} /> Edit Profile
+              className="flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2 rounded-full text-sm font-bold text-slate-700 shadow-sm transition-all active:scale-95">
+              <Edit3 size={16} className="text-sky-500" /> Edit
             </button>
           </div>
         </nav>
 
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          {/* Profile Hero */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-sky-500 to-teal-400 rounded-[2rem] p-8 mb-6 relative overflow-hidden shadow-xl shadow-sky-500/20 border border-sky-400">
-            <div className="absolute -top-16 -right-16 w-48 h-48 bg-white rounded-full blur-[60px] opacity-20 pointer-events-none" />
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6 relative z-10">
-              <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 flex items-center justify-center text-3xl font-extrabold text-white shadow-lg">
-                {savedUser.name?.charAt(0)?.toUpperCase()}
+        <div className="max-w-3xl mx-auto px-6 py-8">
+          {/* Digital ID Card */}
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="relative bg-slate-900 rounded-[2rem] p-8 mb-8 overflow-hidden shadow-2xl shadow-slate-900/20">
+            {/* Background Accents */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-sky-400 to-teal-400 rounded-full blur-[80px] opacity-20 -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+            
+            <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              <div className="w-24 h-24 bg-gradient-to-br from-sky-400 to-teal-400 rounded-[1.5rem] p-[2px]">
+                <div className="w-full h-full bg-slate-900 rounded-[1.4rem] flex items-center justify-center text-4xl font-extrabold text-white">
+                  {savedUser.name?.charAt(0)?.toUpperCase()}
+                </div>
               </div>
+              
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-1">
-                  <h2 className="text-2xl font-extrabold text-white tracking-tight">{savedUser.name}</h2>
-                  <span className="bg-white/20 text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border border-white/30">
+                <div className="flex items-center gap-3 mb-2">
+                  <h2 className="text-3xl font-extrabold text-white tracking-tight">{savedUser.name}</h2>
+                  <span className="bg-sky-500/20 text-sky-300 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest border border-sky-500/30">
                     {savedUser.role || "Student"}
                   </span>
                 </div>
-                <p className="text-sky-100 text-sm font-medium">{savedUser.email}</p>
-                <p className="text-sky-100 text-sm font-medium mt-1">SGGSIE&T, Vishnupuri, Nanded</p>
+                <p className="text-slate-400 text-sm font-medium flex items-center gap-2">
+                  <MapPin size={14} /> SGGSIE&T, Vishnupuri, Nanded
+                </p>
               </div>
-              <div className="flex flex-col items-end gap-2">
-                <div className="bg-white/20 backdrop-blur-md border border-white/30 px-4 py-2.5 rounded-xl">
-                  <p className="text-[10px] text-sky-100 font-bold uppercase tracking-widest">College ID</p>
-                  <p className="text-base font-extrabold text-white">{savedUser.collegeId || "—"}</p>
-                </div>
+
+              {/* Dynamic Primary ID display based on role */}
+              <div className="bg-white/10 backdrop-blur-md border border-white/10 px-5 py-3 rounded-2xl text-right w-full sm:w-auto">
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
+                  {savedUser.role === 'staff' ? 'Employee ID' : savedUser.role === 'guest' ? 'ID Proof' : 'College ID'}
+                </p>
+                <p className="text-lg font-mono font-bold text-white">
+                  {savedUser.collegeId || savedUser.employeeId || savedUser.idProof || "—"}
+                </p>
               </div>
             </div>
           </motion.div>
 
-          {/* Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="bg-white rounded-[1.5rem] border border-slate-100 p-6 shadow-sm">
-              <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2 mb-5 pb-3 border-b border-slate-100">
-                <BookOpen size={17} className="text-sky-500" /> Academic Identity
+          {/* Info Sections */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+              className="bg-white rounded-[1.5rem] border border-slate-200/60 p-6 shadow-sm">
+              <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2 mb-6">
+                <Briefcase size={18} className="text-sky-500" /> Role Specific Details
               </h3>
-              <div className="space-y-4">
-                <ProfileField icon={<GraduationCap size={16} />} label="Course" value={savedUser.course || "—"} color="text-sky-500" />
-                <ProfileField icon={<Calendar size={16} />} label="Year" value={savedUser.year || "—"} color="text-sky-500" />
-                <ProfileField icon={<Phone size={16} />} label="Mobile" value={savedUser.phone || "—"} color="text-sky-500" />
-                <ProfileField icon={<Droplets size={16} />} label="Blood Group" value={savedUser.bloodGroup || "—"} color="text-rose-500" />
+              <div className="space-y-5">
+                {savedUser.role === 'student' && (
+                  <>
+                    <ProfileRow icon={<GraduationCap />} label="Course" value={savedUser.course} />
+                    <ProfileRow icon={<Calendar />} label="Year" value={savedUser.year} />
+                  </>
+                )}
+                {savedUser.role === 'staff' && (
+                  <ProfileRow icon={<Building2 />} label="Department" value={savedUser.department} />
+                )}
+                {savedUser.role === 'guest' && (
+                  <ProfileRow icon={<UserCheck />} label="Purpose of Visit" value={savedUser.purpose} />
+                )}
+                <ProfileRow icon={<Phone />} label="Personal Mobile" value={savedUser.phone} />
               </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-              className="bg-white rounded-[1.5rem] border border-slate-100 p-6 shadow-sm">
-              <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2 mb-5 pb-3 border-b border-slate-100">
-                <ShieldAlert size={17} className="text-rose-500" /> Emergency & Guardian
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+              className="bg-white rounded-[1.5rem] border border-slate-200/60 p-6 shadow-sm">
+              <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2 mb-6">
+                <ShieldAlert size={18} className="text-rose-500" /> Emergency & Address
               </h3>
-              <div className="space-y-4">
-                <ProfileField icon={<User size={16} />} label="Guardian" value={savedUser.guardianName || "—"} color="text-slate-500" />
-                <ProfileField icon={<Phone size={16} />} label="Emergency" value={savedUser.emergencyPhone || "—"} color="text-rose-500" />
-                <ProfileField icon={<MapPin size={16} />} label="Address" value={savedUser.address || "—"} color="text-slate-500" />
+              <div className="space-y-5">
+                {savedUser.role === 'student' && (
+                  <ProfileRow icon={<User />} label="Guardian" value={savedUser.guardianName} />
+                )}
+                <ProfileRow icon={<Phone />} label="Emergency Contact" value={savedUser.emergencyPhone} />
+                <ProfileRow icon={<MapPin />} label="Permanent Address" value={savedUser.address} />
               </div>
-            </motion.div>
-
-            {/* Quick Actions */}
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <button onClick={() => navigate("/dashboard")}
-                className="flex items-center justify-center gap-3 bg-sky-500 hover:bg-sky-600 text-white py-4 rounded-2xl text-sm font-bold shadow-lg shadow-sky-500/20 transition-all">
-                <Building2 size={18} /> Go to Dashboard
-              </button>
-              <button onClick={() => navigate("/home")}
-                className="flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-700 py-4 rounded-2xl text-sm font-bold border border-slate-100 shadow-sm transition-all">
-                <Building2 size={18} /> Explore Hostels
-              </button>
-              <button onClick={() => navigate("/my-bookings")}
-                className="flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-700 py-4 rounded-2xl text-sm font-bold border border-slate-100 shadow-sm transition-all">
-                <CheckCircle2 size={18} /> My Bookings
-              </button>
             </motion.div>
           </div>
+
+          {/* Quick Actions Navigation */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button onClick={() => navigate("/dashboard")}
+              className="flex items-center justify-between bg-white hover:bg-slate-50 text-slate-800 p-5 rounded-2xl font-bold border border-slate-200/60 shadow-sm transition-all group">
+              <span className="flex items-center gap-3"><Building2 className="text-sky-500" size={20} /> Access Dashboard</span>
+              <ArrowRight size={18} className="text-slate-400 group-hover:text-sky-500 group-hover:translate-x-1 transition-all" />
+            </button>
+            <button onClick={() => navigate("/my-bookings")}
+              className="flex items-center justify-between bg-white hover:bg-slate-50 text-slate-800 p-5 rounded-2xl font-bold border border-slate-200/60 shadow-sm transition-all group">
+              <span className="flex items-center gap-3"><CheckCircle2 className="text-teal-500" size={20} /> My Bookings</span>
+              <ArrowRight size={18} className="text-slate-400 group-hover:text-teal-500 group-hover:translate-x-1 transition-all" />
+            </button>
+          </motion.div>
         </div>
       </div>
     );
   }
 
-  // ─── FORM VIEW ────────────────────────────────────────────
+  // ─── DYNAMIC FORM VIEW ──────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-12">
       <Toaster position="top-right" />
 
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-100 px-6 py-4 shadow-sm">
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <img src={SggsLogo} alt="SGGS Logo" className="w-9 object-contain" />
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4 shadow-sm">
+        <div className="max-w-3xl mx-auto flex items-center gap-3">
+          <img src={SggsLogo} alt="SGGS Logo" className="w-9 object-contain drop-shadow-sm" />
           <div>
-            <p className="text-base font-extrabold text-slate-800 leading-none">Institutional Profile</p>
-            <p className="text-[9px] font-bold text-sky-500 uppercase tracking-widest mt-1">Required for Hostel Allocation</p>
+            <p className="text-base font-extrabold text-slate-900 leading-none">Setup Profile</p>
+            <p className="text-[10px] font-bold text-sky-500 uppercase tracking-widest mt-1">StayPG Booking System</p>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* Progress hint */}
-        <div className="flex items-center gap-3 mb-6 p-4 bg-sky-50 border border-sky-100 rounded-2xl">
-          <div className="w-9 h-9 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center flex-shrink-0">
-            <CheckCircle2 size={18} />
-          </div>
-          <div>
-            <p className="text-sm font-extrabold text-sky-800">Takes only 30 seconds</p>
-            <p className="text-xs font-medium text-sky-600">Fill in the basics — this data is securely shared only with the Rector's Office.</p>
-          </div>
-        </div>
-
+      <div className="max-w-3xl mx-auto px-6 py-8">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6 md:p-10">
-          <form onSubmit={handleSubmit} className="space-y-7">
-
-            {/* Section 1 */}
+          className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 overflow-hidden">
+          
+          <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-8">
+            
+            {/* Role Selection Segment Control */}
             <div>
-              <h3 className="text-base font-extrabold text-slate-800 border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
-                <BookOpen size={17} className="text-sky-500" /> Academic Identity
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <InputField icon={<CreditCard />} label="Registration / College ID" placeholder="e.g. 2022BTECS000" uppercase
-                  onChange={(e) => setFormData({ ...formData, collegeId: e.target.value })} />
-                <SelectField icon={<GraduationCap />} label="Course" options={["B.Tech 1st Year", "B.Tech 2nd Year", "B.Tech 3rd Year", "B.Tech 4th Year", "M.Tech", "Ph.D"]}
-                  onChange={(e) => setFormData({ ...formData, course: e.target.value })} />
-                <InputField icon={<Phone />} label="Your Mobile Number" placeholder="+91 98765 43210"
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
-                <SelectField icon={<HeartPulse />} label="Blood Group" options={["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]}
-                  onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })} />
+              <label className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-3 block">
+                I am a...
+              </label>
+              <div className="flex p-1 bg-slate-100 rounded-xl">
+                {['student', 'staff', 'guest'].map((roleType) => (
+                  <button key={roleType} type="button"
+                    onClick={() => setFormData({ ...formData, role: roleType })}
+                    className={`flex-1 py-3 text-sm font-bold rounded-lg capitalize transition-all duration-300 ${
+                      formData.role === roleType 
+                        ? 'bg-white text-sky-600 shadow-sm border border-slate-200/50' 
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}>
+                    {roleType}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Section 2 */}
-            <div>
-              <h3 className="text-base font-extrabold text-slate-800 border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
-                <ShieldAlert size={17} className="text-rose-500" /> Emergency & Guardian Info
+            {/* Dynamic Fields Section */}
+            <motion.div layout className="space-y-6">
+              <h3 className="text-lg font-extrabold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
+                <IdCard size={20} className="text-sky-500" /> Identity Details
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <AnimatePresence mode="popLayout">
+                  {/* STUDENT FIELDS */}
+                  {formData.role === 'student' && (
+                    <motion.div key="student-fields" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="contents">
+                      <InputField icon={<IdCard />} label="Registration / College ID" placeholder="e.g. 2022BTECS000" uppercase
+                        value={formData.collegeId} onChange={(e) => setFormData({ ...formData, collegeId: e.target.value })} />
+                      <SelectField icon={<GraduationCap />} label="Course" value={formData.course}
+                        options={["B.Tech 1st Year", "B.Tech 2nd Year", "B.Tech 3rd Year", "B.Tech 4th Year", "M.Tech", "Ph.D"]}
+                        onChange={(e) => setFormData({ ...formData, course: e.target.value })} />
+                      <InputField icon={<User />} label="Guardian Name" placeholder="Parent/Guardian Full Name"
+                        value={formData.guardianName} onChange={(e) => setFormData({ ...formData, guardianName: e.target.value })} />
+                    </motion.div>
+                  )}
+
+                  {/* STAFF FIELDS */}
+                  {formData.role === 'staff' && (
+                    <motion.div key="staff-fields" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="contents">
+                      <InputField icon={<IdCard />} label="Employee ID" placeholder="e.g. EMP12345" uppercase
+                        value={formData.employeeId} onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })} />
+                      <InputField icon={<Building2 />} label="Department" placeholder="e.g. Computer Science"
+                        value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
+                    </motion.div>
+                  )}
+
+                  {/* GUEST FIELDS */}
+                  {formData.role === 'guest' && (
+                    <motion.div key="guest-fields" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="contents">
+                      <InputField icon={<IdCard />} label="ID Proof Number (Aadhar/PAN)" placeholder="Enter ID Number" uppercase
+                        value={formData.idProof} onChange={(e) => setFormData({ ...formData, idProof: e.target.value })} />
+                      <InputField icon={<UserCheck />} label="Purpose of Visit" placeholder="e.g. Guest Lecture, Exam Duty"
+                        value={formData.purpose} onChange={(e) => setFormData({ ...formData, purpose: e.target.value })} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* COMMON FIELDS */}
+                <InputField icon={<Phone />} label="Your Mobile Number" placeholder="+91 98765 43210"
+                  value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+              </div>
+            </motion.div>
+
+            {/* Contact & Emergency Section */}
+            <motion.div layout>
+              <h3 className="text-lg font-extrabold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3 mb-5 mt-4">
+                <AlertCircle size={20} className="text-rose-500" /> Contact & Address
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <InputField icon={<User />} label="Guardian Name" placeholder="Full Name"
-                  onChange={(e) => setFormData({ ...formData, guardianName: e.target.value })} />
-                <InputField icon={<Phone />} label="Emergency Contact" placeholder="Parent/Guardian Phone"
-                  onChange={(e) => setFormData({ ...formData, emergencyPhone: e.target.value })} />
+                <InputField icon={<Phone />} label="Emergency Contact Phone" placeholder="For emergencies only"
+                  value={formData.emergencyPhone} onChange={(e) => setFormData({ ...formData, emergencyPhone: e.target.value })} />
                 <div className="md:col-span-2">
                   <InputField icon={<MapPin />} label="Permanent Residential Address" placeholder="House No, Street, City, State, PIN"
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+                    value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             <button type="submit" disabled={isSubmitting}
-              className="w-full bg-sky-500 hover:bg-sky-600 text-white py-4.5 py-[1.1rem] rounded-2xl font-extrabold uppercase text-sm tracking-[0.15em] shadow-lg shadow-sky-500/30 transition-all flex justify-center items-center gap-3 active:scale-95 disabled:opacity-70">
-              {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <>Lock & Submit Profile <ArrowRight size={18} /></>}
+              className="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white py-[1.2rem] rounded-2xl font-extrabold uppercase text-sm tracking-[0.15em] shadow-xl shadow-slate-900/20 transition-all flex justify-center items-center gap-3 active:scale-95 disabled:opacity-70">
+              {isSubmitting ? <Loader2 size={20} className="animate-spin text-sky-400" /> : <>Save & Continue <ArrowRight size={18} className="text-sky-400" /></>}
             </button>
           </form>
         </motion.div>
@@ -225,39 +309,47 @@ export default function CompleteProfile() {
   );
 }
 
-function ProfileField({ icon, label, value, color }) {
+// ─── HELPER COMPONENTS ───────────────────────────────────────────────────
+
+function ProfileRow({ icon, label, value }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-slate-50 flex-shrink-0 ${color}`}>{icon}</div>
-      <div className="min-w-0">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
-        <p className="text-sm font-bold text-slate-800 truncate">{value}</p>
+    <div className="flex items-center gap-4 group">
+      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-sky-500 group-hover:bg-sky-50 transition-colors flex-shrink-0">
+        {React.cloneElement(icon, { size: 18 })}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
+        <p className="text-sm font-bold text-slate-800 truncate">{value || "—"}</p>
       </div>
     </div>
   );
 }
 
-function InputField({ icon, label, placeholder, uppercase, onChange }) {
+function InputField({ icon, label, placeholder, uppercase, value, onChange }) {
   return (
     <div>
-      <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2 block ml-1">{label}</label>
-      <div className="relative">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-sky-400">{React.cloneElement(icon, { size: 17 })}</div>
-        <input required type="text" placeholder={placeholder} onChange={onChange}
-          className={`w-full py-3.5 pl-12 pr-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-sky-400 focus:bg-white transition-all text-sm font-bold text-slate-700 ${uppercase ? "uppercase" : ""}`} />
+      <label className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mb-2 block ml-1">{label}</label>
+      <div className="relative group">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors">
+          {React.cloneElement(icon, { size: 18 })}
+        </div>
+        <input required type="text" placeholder={placeholder} value={value} onChange={onChange}
+          className={`w-full py-3.5 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-500/10 transition-all text-sm font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium ${uppercase ? "uppercase" : ""}`} />
       </div>
     </div>
   );
 }
 
-function SelectField({ icon, label, options, onChange }) {
+function SelectField({ icon, label, options, value, onChange }) {
   return (
     <div>
-      <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2 block ml-1">{label}</label>
-      <div className="relative">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-sky-400 pointer-events-none">{React.cloneElement(icon, { size: 17 })}</div>
-        <select required onChange={onChange} defaultValue=""
-          className="w-full py-3.5 pl-12 pr-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-sky-400 focus:bg-white transition-all text-sm font-bold text-slate-700 appearance-none cursor-pointer">
+      <label className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mb-2 block ml-1">{label}</label>
+      <div className="relative group">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors pointer-events-none">
+          {React.cloneElement(icon, { size: 18 })}
+        </div>
+        <select required value={value || ""} onChange={onChange}
+          className="w-full py-3.5 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-500/10 transition-all text-sm font-bold text-slate-800 appearance-none cursor-pointer">
           <option value="" disabled>Select Option</option>
           {options.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
         </select>
