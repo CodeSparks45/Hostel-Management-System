@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Users, AlertTriangle, CheckCircle, Search, Filter, Map,
+   AlertTriangle, CheckCircle, Search, Filter, Map,
   ShieldCheck, Building2, Check, X, LogOut, Settings, Clock,
   DoorOpen, UserCheck, ShieldAlert, FileText, Download, Briefcase,
   Mail,  Eye,  Activity, Zap
@@ -18,7 +18,7 @@ export default function RectorDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Actual hostel rooms — Sahyadri Boys (AC: A4,A10,B4,B10 | Non-AC: A8,A9,B8,B9) + Krishna Girls (Non-AC: A9,A10)
-  const [rooms, setRooms] = useState([
+  const [rooms, ] = useState([
     // Sahyadri Boys — AC Rooms
     { number: "A4",  hostel: "Sahyadri Boys", type: "AC",     occupied: 1, capacity: 1, status: "Full" },
     { number: "A10", hostel: "Sahyadri Boys", type: "AC",     occupied: 0, capacity: 1, status: "Available" },
@@ -34,7 +34,7 @@ export default function RectorDashboard() {
     { number: "A10", hostel: "Krishna Girls", type: "Non-AC", occupied: 0, capacity: 1, status: "Available" },
   ]);
 
-  const [guests, setGuests] = useState([
+  const [guests, ] = useState([
     { id: "EMP-2041", name: "Prof. Arvind Kumar", designation: "Faculty", hostel: "Sahyadri Boys", room: "A4", status: "In Campus", checkin: "10 Apr 2026", checkout: "12 Apr 2026" },
     { id: "GST-9921", name: "Mr. Ramesh Desai",  designation: "Official Guest", hostel: "Sahyadri Boys", room: "B4", status: "In Campus", checkin: "10 Apr 2026", checkout: "11 Apr 2026" },
     { id: "EMP-1102", name: "Dr. Sneha Rao",     designation: "Principal Office", hostel: "Krishna Girls", room: "A9", status: "On Leave", checkin: "08 Apr 2026", checkout: "09 Apr 2026" },

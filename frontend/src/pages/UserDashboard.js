@@ -6,7 +6,7 @@ import {
   Building2, Smartphone, GraduationCap, Utensils, Wrench, Bell,
   ArrowUpRight, X, Send, CalendarCheck, BadgeCheck, Siren, Bot, Clock,
   AlertCircle, Lock,  Wifi,
-  Moon, Sun, Activity,  Coffee, Wind, Shield, Zap, Star
+  Moon, Sun, Activity,  Coffee, Wind, Shield, Zap, 
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { ThemeContext } from "../context/ThemeContext";

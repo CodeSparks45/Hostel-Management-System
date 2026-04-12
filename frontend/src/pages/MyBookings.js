@@ -24,6 +24,7 @@ export default function MyBookings() {
       fetchMyBookings(true); // silent = don't show loading spinner on auto-refresh
     }, 5000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchMyBookings = async (silent = false) => {

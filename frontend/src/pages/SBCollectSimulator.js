@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircle2, ArrowRight, Download, ShieldCheck } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
-import API from "../services/api";
+
 
 export default function SBCollectSimulator() {
   const { id, amount } = useParams();

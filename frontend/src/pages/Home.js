@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Toaster } from "react-hot-toast";
-import API from "../services/api";
+
 
 import boys_hostel1 from "./boys_hostel1.jpeg";
 import boys_hostel2 from "./boys_hostel2.jpeg";
@@ -379,8 +379,7 @@ export default function Home() {
     });
 
   const totalRooms     = ROOMS.length;
-  const availableMale  = ROOMS.filter(r => r.gender === "male"   && r.available).length;
-  const availableFemale = ROOMS.filter(r => r.gender === "female" && r.available).length;
+  
   const avgRating      = (ROOMS.reduce((s, r) => s + r.rating, 0) / ROOMS.length).toFixed(1);
 
   return (
