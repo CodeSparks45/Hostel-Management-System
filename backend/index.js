@@ -22,6 +22,9 @@ const authMiddleware = require("./middleware/authMiddleware");
 
 const app = express();
 
+// 🚀 ADDED THIS LINE TO FIX EXPRESS-RATE-LIMIT WARNING ON RENDER
+app.set('trust proxy', 1);
+
 // CORS FIX: Allow Frontend to talk to Backend
 app.use(cors({
   origin: true, // Yeh abhi ke liye sabko allow karega taaki Vercel se error na aaye

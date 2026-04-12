@@ -2,11 +2,16 @@ const nodemailer = require("nodemailer");
 
 // ── Transporter (Gmail SMTP) ──────────────────────────────────────
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, // Use SSL
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS, // Gmail App Password (not normal password)
   },
+  tls: {
+    rejectUnauthorized: false // Yeh line timeout rokegi Render par
+  }
 });
 
 // ── Main Email Function ───────────────────────────────────────────
@@ -98,7 +103,7 @@ const sendApprovalEmail = async (toEmail, guestName, roomNumber, hostelName, che
               </p>
             </div>
 
-            <a href="http://localhost:3000/my-bookings" class="btn">
+            <a href="https://hostel-management-system-psi-seven.vercel.app/my-bookings" class="btn">
               View My Booking & QR Pass →
             </a>
 
@@ -174,7 +179,7 @@ const sendRejectionEmail = async (toEmail, guestName, reason = "Please contact t
             <p style="font-size:14px;color:#64748b;line-height:1.7;margin-bottom:28px;">
               You may re-apply with correct documents or contact the Rector's office directly for assistance.
             </p>
-            <a href="http://localhost:3000/home" class="btn">
+            <a href="https://hostel-management-system-psi-seven.vercel.app/home" class="btn">
               Try Booking Again →
             </a>
           </div>
