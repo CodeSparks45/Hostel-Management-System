@@ -55,30 +55,34 @@ export default function SBCollectSimulator() {
   };
 
   const handleProceedToVerify = () => {
-  // localStorage mein payment session save karo (VerifyPayment padh lega)
-  const paymentSession = {
-    duNumber:    duNumber,
-    name:        formData.name,
-    designation: formData.designation,
-    amount:      amount || "450",
-    hostelId:    id,       // ye MongoDB Room _id hona chahiye
-    hostelName:  instName === "SGGSIE&T" ? "Sahyadri" : "Sahyadri",
-    purpose:     formData.purpose,
-    mobile:      formData.mobile,
-    timestamp:   new Date().toLocaleString(),
-  };
-  localStorage.setItem("lastPaymentSession", JSON.stringify(paymentSession));
+    const session = JSON.parse(localStorage.getItem("lastPaymentSession") || "{}");
 
-  navigate("/verify-payment", {
-    state: {
-      duNumber:  duNumber,
-      name:      formData.name,
-      amount:    amount || "450",
-      hostelId:  id,
-      hostelName: "Sahyadri",
-    },
-  });
-};
+    // ✅ hostelName correctly set karo
+    const hostelNameFinal = session.hostelName || (instName === "SGGSIE&T" ? "Sahyadri Boys Hostel" : "Sahyadri Boys Hostel");
+
+    localStorage.setItem("lastPaymentSession", JSON.stringify({
+      ...session,
+      duNumber:    duNumber,
+      name:        formData.name,
+      designation: formData.designation,
+      amount:      amount || "450",
+      hostelName:  hostelNameFinal,
+      purpose:     formData.purpose,
+      mobile:      formData.mobile,
+      timestamp:   new Date().toLocaleString(),
+    }));
+
+    navigate("/verify-payment", {
+      state: {
+        duNumber:   duNumber,
+        name:       formData.name,
+        amount:     amount || "450",
+        hostelId:   session.hostelId   || id,
+        hostelName: hostelNameFinal,
+        roomNumber: session.roomNumber || "",
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#f4f4f4] font-sans text-[#333]">

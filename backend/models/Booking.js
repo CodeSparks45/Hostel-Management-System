@@ -1,43 +1,31 @@
 const mongoose = require("mongoose");
 
 const bookingSchema = new mongoose.Schema({
-  user: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
-    required: true 
-  },
-  room: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "Room", 
-    required: true 
-  },
-  hostelName:    { type: String, required: true },   // "Sahyadri" / "Nandgiri"
-  roomNumber:    { type: String },                   // "S-101" — set on approval
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  room: { type: mongoose.Schema.Types.ObjectId, ref: "Room", required: true },
 
-  // Payment
-  paymentStatus: { 
-    type: String, 
-    enum: ["pending", "approved", "rejected"], 
-    default: "pending" 
-  },
-  duNumber:      { type: String, required: true },   // SBI Collect DU Reference
-  receiptUrl:    { type: String },                   // Cloudinary URL of uploaded receipt
+  hostelName:    { type: String, required: true },
+  roomNumber:    { type: String },
 
-  // Dates — set when Rector approves
+  paymentStatus: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+  duNumber:      { type: String, required: true, unique: true }, // 🔥 unique prevents double booking
+  receiptUrl:    { type: String },
+
+  // Set when Rector approves (planned times)
   checkInTime:   { type: Date },
   checkOutTime:  { type: Date },
 
-  // Rejection
+  // 🆕 Set when Guard actually scans QR (real times — for live timer)
+  actualCheckInTime:  { type: Date },
+  actualCheckOutTime: { type: Date },
+
+  // 🆕 Check-in status for guard scanner
+  checkInStatus: { type: String, enum: ["not_checked_in", "checked_in", "checked_out"], default: "not_checked_in" },
+
   rejectionReason: { type: String },
 
-  // Overall status
-  status: { 
-    type: String, 
-    enum: ["active", "expired", "cancelled"], 
-    default: "active" 
-  },
+  status: { type: String, enum: ["active", "expired", "cancelled"], default: "active" },
 
-  // Email tracking
   emailSent: { type: Boolean, default: false },
 
 }, { timestamps: true });

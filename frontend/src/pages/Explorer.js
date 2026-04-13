@@ -32,7 +32,7 @@ const ROOM_DATA = {
     amenities: ["WiFi (100 Mbps)", "Air Conditioning", "Mess Access", "Study Desk", "Wardrobe", "24H Security"],
     amenityIcons: ["wifi", "ac", "mess", "desk", "wardrobe", "shield"],
     images: [boys1, boys2, boys3],
-    mongoRoomId: "", // Fill after seeding MongoDB
+    mongoRoomId: "69db1d0e7aaf66498f96654f",
     checkInTime: "2:00 PM", checkOutTime: "11:00 AM",
     reviews: [
       { name: "Prof. A. Kulkarni", role: "Faculty, E&TC", rating: 5, comment: "Excellent room. Very clean and well-maintained. The AC works perfectly." },
@@ -49,7 +49,7 @@ const ROOM_DATA = {
     amenities: ["WiFi (100 Mbps)", "Air Conditioning", "Mess Access", "Garden View", "Wardrobe", "24H Security"],
     amenityIcons: ["wifi", "ac", "mess", "view", "wardrobe", "shield"],
     images: [boys2, boys3, boys4],
-    mongoRoomId: "",
+    mongoRoomId: "69db1d0e7aaf66498f966550",
     checkInTime: "2:00 PM", checkOutTime: "11:00 AM",
     reviews: [
       { name: "Dr. R. Sharma", role: "AICTE Inspector", rating: 5, comment: "Corner room with amazing garden view. Very peaceful for reading and work." },
@@ -66,7 +66,7 @@ const ROOM_DATA = {
     amenities: ["WiFi (100 Mbps)", "Air Conditioning", "Mess Access", "Near Parking", "Wardrobe", "24H Security"],
     amenityIcons: ["wifi", "ac", "mess", "parking", "wardrobe", "shield"],
     images: [boys3, boys4, boys5],
-    mongoRoomId: "",
+    mongoRoomId: "69db1d0e7aaf66498f966551",
     checkInTime: "2:00 PM", checkOutTime: "11:00 AM",
     reviews: [
       { name: "Mr. P. Desai", role: "Official Guest, NAAC", rating: 5, comment: "Convenient location near admin block. Everything was in perfect order." },
@@ -82,7 +82,7 @@ const ROOM_DATA = {
     amenities: ["WiFi (100 Mbps)", "Air Conditioning", "Mess Access", "Café Access", "Panoramic View", "24H Security"],
     amenityIcons: ["wifi", "ac", "mess", "cafe", "view", "shield"],
     images: [boys4, boys1, boys2],
-    mongoRoomId: "",
+    mongoRoomId: "", 
     checkInTime: "2:00 PM", checkOutTime: "11:00 AM",
     reviews: [
       { name: "Dr. A. Mehta", role: "Principal, VIT College", rating: 5, comment: "Outstanding room. The campus view from the window is breathtaking." },
@@ -99,7 +99,7 @@ const ROOM_DATA = {
     amenities: ["WiFi (100 Mbps)", "Ceiling Fan", "Mess Access", "Study Desk", "Wardrobe", "24H Security"],
     amenityIcons: ["wifi", "fan", "mess", "desk", "wardrobe", "shield"],
     images: [boys5, boys6, boys7],
-    mongoRoomId: "",
+    mongoRoomId: "69db1d0e7aaf66498f966553",
     checkInTime: "2:00 PM", checkOutTime: "11:00 AM",
     reviews: [
       { name: "Mr. R. Kumar", role: "Govt. Official", rating: 4, comment: "Simple but clean room. Very value for money. Staff is cooperative." },
@@ -115,7 +115,7 @@ const ROOM_DATA = {
     amenities: ["WiFi (100 Mbps)", "Ceiling Fan", "Mess Access", "Near Reading Hall", "Wardrobe", "24H Security"],
     amenityIcons: ["wifi", "fan", "mess", "library", "wardrobe", "shield"],
     images: [boys6, boys5, boys8],
-    mongoRoomId: "",
+    mongoRoomId: "69db1d0e7aaf66498f966554",
     checkInTime: "2:00 PM", checkOutTime: "11:00 AM",
     reviews: [
       { name: "Prof. N. Rao", role: "Research Scholar", rating: 4, comment: "Peaceful room near the reading area. Ideal for extended academic visits." },
@@ -131,7 +131,7 @@ const ROOM_DATA = {
     amenities: ["WiFi (100 Mbps)", "Ceiling Fan", "Mess Access", "Café Access", "Near Lounge", "24H Security"],
     amenityIcons: ["wifi", "fan", "mess", "cafe", "lounge", "shield"],
     images: [boys7, boys8, boys1],
-    mongoRoomId: "",
+    mongoRoomId: "", 
     checkInTime: "2:00 PM", checkOutTime: "11:00 AM",
     reviews: [
       { name: "Dr. V. Nair", role: "Industry Expert", rating: 5, comment: "Great atmosphere. The café nearby is a bonus. Very welcoming environment." },
@@ -147,7 +147,7 @@ const ROOM_DATA = {
     amenities: ["WiFi (100 Mbps)", "Ceiling Fan", "Mess Access", "Cross Ventilation", "Wardrobe", "24H Security"],
     amenityIcons: ["wifi", "fan", "mess", "breeze", "wardrobe", "shield"],
     images: [boys8, boys7, boys6],
-    mongoRoomId: "",
+    mongoRoomId: "", 
     checkInTime: "2:00 PM", checkOutTime: "11:00 AM",
     reviews: [
       { name: "Mr. S. Gupta", role: "Visiting Lecturer", rating: 4, comment: "First floor room with great airflow. Very comfortable in cooler months." },
@@ -163,7 +163,7 @@ const ROOM_DATA = {
     amenities: ["WiFi (100 Mbps)", "Ceiling Fan", "Mess Access", "Dedicated Security", "Wardrobe", "CCTV Covered"],
     amenityIcons: ["wifi", "fan", "mess", "shield", "wardrobe", "cctv"],
     images: [girls1, girls2, girls1],
-    mongoRoomId: "",
+    mongoRoomId: "", 
     checkInTime: "2:00 PM", checkOutTime: "11:00 AM",
     reviews: [
       { name: "Dr. S. Kulkarni", role: "HOD, Civil Dept.", rating: 5, comment: "Very safe and comfortable. The security arrangements give complete peace of mind." },
@@ -180,7 +180,7 @@ const ROOM_DATA = {
     amenities: ["WiFi (100 Mbps)", "Ceiling Fan", "Mess Access", "Extra Storage", "Wardrobe", "CCTV Covered"],
     amenityIcons: ["wifi", "fan", "mess", "storage", "wardrobe", "cctv"],
     images: [girls2, girls1, girls2],
-    mongoRoomId: "",
+    mongoRoomId: "", 
     checkInTime: "2:00 PM", checkOutTime: "11:00 AM",
     reviews: [
       { name: "Ms. A. Sharma", role: "AICTE Reviewer", rating: 5, comment: "Spacious and clean room. Extra storage was very helpful for my week-long stay." },
@@ -231,7 +231,6 @@ export default function Explorer() {
     window.scrollTo(0, 0);
   }, [id]);
 
-  // Room not found
   if (!room) {
     return (
       <div className="min-h-screen bg-sky-50/50 flex flex-col items-center justify-center p-6">
@@ -247,24 +246,29 @@ export default function Explorer() {
 
   const tabs = ["Overview", "Amenities", "Location", "Reviews"];
 
+  // ✅ THE UPDATED SECURE CHECKOUT
   const handleSecureCheckout = () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("Please login first to book a room!");
+      toast.error("Please login first!");
       navigate("/login");
       return;
     }
+
     const loadingToast = toast.loading("Connecting to SBI Secure Servers...");
     setTimeout(() => {
       toast.dismiss(loadingToast);
-      // Pass room id and price. hostelId will be set from room.mongoRoomId once DB is seeded
+
+      // Save roomNumber and hostelName to localStorage so payment gateway and backend can use it
       localStorage.setItem("lastPaymentSession", JSON.stringify({
-        hostelId:   room.mongoRoomId || id,
-        hostelName: room.hostel,
-        roomNumber: room.roomNumber,
-        roomType:   room.type,
-        price:      room.price,
+        hostelId:    room.mongoRoomId,    
+        hostelName:  room.hostel,         
+        roomNumber:  room.roomNumber,     
+        roomType:    room.type,
+        price:       room.price,
       }));
+
+      // Send mongoRoomId in URL if available, else fallback to hardcoded id
       navigate(`/payment-gateway/${room.mongoRoomId || id}/${room.price}`);
     }, 1500);
   };
@@ -273,7 +277,6 @@ export default function Explorer() {
     e.preventDefault();
     if (!feedbackText.trim()) return;
     setSubmittingFeedback(true);
-    // Simulate API call
     await new Promise(r => setTimeout(r, 1500));
     toast.success("Feedback submitted! Thank you. ✅");
     setFeedbackText("");
@@ -328,7 +331,6 @@ export default function Explorer() {
               <Camera size={14} className="text-sky-500" />
               {room.hostel} · Room {room.roomNumber}
             </div>
-            {/* Type Badge on image */}
             <div className={`absolute top-5 left-5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${room.type === "AC" ? "bg-blue-500 text-white" : "bg-slate-700 text-white"}`}>
               {room.type === "AC" ? "❄️ AC Room" : "🌀 Non-AC Room"}
             </div>
@@ -399,7 +401,6 @@ export default function Explorer() {
                     </h2>
                     <p className="text-base text-slate-500 leading-relaxed font-medium max-w-xl">{room.desc}</p>
 
-                    {/* Quick Stats */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <QuickStat icon={<Bed size={20} />} label="Capacity" value="Single" color="sky" />
                       <QuickStat icon={<Building2 size={20} />} label="Block" value={room.block} color="teal" />
@@ -407,7 +408,6 @@ export default function Explorer() {
                       <QuickStat icon={<Thermometer size={20} />} label="Type" value={room.type} color={room.type === "AC" ? "blue" : "slate"} />
                     </div>
 
-                    {/* Check-in / Check-out */}
                     <div className="bg-white rounded-2xl p-6 border border-sky-100 shadow-sm">
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Stay Information</p>
                       <div className="grid grid-cols-2 gap-4">

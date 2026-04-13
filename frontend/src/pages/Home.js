@@ -10,7 +10,6 @@ import {
 import toast from "react-hot-toast";
 import { Toaster } from "react-hot-toast";
 
-
 import boys_hostel1 from "./boys_hostel1.jpeg";
 import boys_hostel2 from "./boys_hostel2.jpeg";
 import boys_hostel3 from "./boys_hostel3.jpeg";
@@ -211,8 +210,11 @@ function StatPill({ icon, label, value, color }) {
 }
 
 // ── ROOM CARD ─────────────────────────────────────────────────
-function RoomCard({ room, isLocked, onExplore, onBook, index }) {
+function RoomCard({ room, isLocked, isRoomBooked, onExplore, onBook, index }) {
   const [hovered, setHovered] = useState(false);
+
+  // ✅ NAYA LOGIC ADD KIYA: isRoomBooked flag ya availableRooms <= 0 check karega
+  const isFull = isRoomBooked || (room.availableRooms !== undefined && room.availableRooms <= 0);
 
   return (
     <motion.div
@@ -296,7 +298,14 @@ function RoomCard({ room, isLocked, onExplore, onBook, index }) {
           >
             <Eye size={14} /> Details
           </button>
-          {!isLocked ? (
+          
+          {/* ✅ NAYA LOGIC ADD KIYA: Agar room full/booked hai toh FULL dikhayega, Book karne nahi dega */}
+          {isFull ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-1 bg-rose-50 text-rose-500 py-3 rounded-xl border border-rose-100 text-xs font-bold">
+              <span>🔴 BOOKED</span>
+              <span className="text-[9px] font-bold text-rose-400 uppercase tracking-widest">Not Available</span>
+            </div>
+          ) : !isLocked ? (
             <button
               onClick={() => onBook(room)}
               className="flex-1 flex items-center justify-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white py-3 rounded-xl text-xs font-bold shadow-md shadow-sky-500/20 transition-all active:scale-95"
@@ -313,6 +322,12 @@ function RoomCard({ room, isLocked, onExplore, onBook, index }) {
     </motion.div>
   );
 }
+
+// Helper: MongoDB room number → frontend room id map
+const getFrontendRoomId = (number, hostel) => {
+  const hostelPrefix = hostel.toLowerCase().includes("krishna") ? "krishna" : "sahyadri";
+  return `${hostelPrefix}-${number}`;  // e.g. "sahyadri-A4"
+};
 
 // ── MAIN HOME ─────────────────────────────────────────────────
 export default function Home() {
@@ -332,10 +347,50 @@ export default function Home() {
   const unreadCount = notifications.filter(n => n.unread).length;
 
   const [time, setTime] = useState(new Date());
+
+  // ✅ 1. Room availability fetch karne ka logic
+  const [roomAvailability, setRoomAvailability] = useState({});
+
+  useEffect(() => {
+    fetchRoomAvailability();
+    // Har 30 second mein refresh
+    const interval = setInterval(fetchRoomAvailability, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  const fetchRoomAvailability = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/book/room-status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+
+      // Room number se map banao
+      const availMap = {};
+      data.forEach(r => {
+        // Frontend room id se match karna
+        const frontendId = getFrontendRoomId(r.number, r.hostel);
+        if (frontendId) {
+          availMap[frontendId] = {
+            isBooked: r.isBooked,
+            availableRooms: r.availableRooms,
+            mongoId: r._id
+          };
+        }
+      });
+      setRoomAvailability(availMap);
+    } catch (err) {
+      console.log("Room availability fetch failed:", err.message);
+    }
+  };
 
   const handleExplore = (room) => {
     if (user.gender !== room.gender) {
@@ -629,16 +684,23 @@ export default function Home() {
                   animate={{ opacity: 1 }}
                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                 >
-                  {genderRooms.map((room, i) => (
-                    <RoomCard
-                      key={room.id}
-                      room={room}
-                      index={i}
-                      isLocked={user.gender !== room.gender}
-                      onExplore={handleExplore}
-                      onBook={handleBook}
-                    />
-                  ))}
+                  {/* ✅ 2. RoomCard ko isRoomBooked paas kar diya gaya hai */}
+                  {genderRooms.map((room, i) => {
+                    const availInfo = roomAvailability[room.id];
+                    const isRoomBooked = availInfo ? availInfo.isBooked : false;
+
+                    return (
+                      <RoomCard
+                        key={room.id}
+                        room={{ ...room, availableRooms: availInfo?.availableRooms ?? 1 }}
+                        index={i}
+                        isLocked={user.gender !== room.gender}
+                        isRoomBooked={isRoomBooked}  
+                        onExplore={handleExplore}
+                        onBook={handleBook}
+                      />
+                    );
+                  })}
                 </motion.div>
               </AnimatePresence>
             </div>

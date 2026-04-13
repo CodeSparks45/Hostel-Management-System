@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Phone, User, MapPin, ShieldAlert, ArrowRight, Loader2,
-  CheckCircle2, Edit3, GraduationCap, Building2, Calendar, Briefcase,
-  IdCard, UserCheck, AlertCircle
+  Phone, CreditCard, User, HeartPulse, MapPin, ShieldAlert,
+  ArrowRight, Loader2, BookOpen, Edit3, Mail, Building2,
+  CheckCircle2, Calendar,CalendarCheck, Shield, LogOut, Camera, Briefcase
 } from "lucide-react";
 import API from "../services/api";
 import toast, { Toaster } from "react-hot-toast";
@@ -12,181 +12,189 @@ import SggsLogo from "./sggs-logo.png";
 
 export default function CompleteProfile() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState("loading"); // loading | form | view
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [profileSaved, setProfileSaved] = useState(false);
-  const [savedUser, setSavedUser] = useState(null);
-  
-  // Dynamic form state including role
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
-    role: "student", // default role: 'student', 'staff', 'guest'
-    phone: "", 
-    emergencyPhone: "", 
-    address: "",
-    // Student specific
-    collegeId: "", course: "", year: "", guardianName: "",
-    // Staff specific
-    employeeId: "", department: "",
-    // Guest specific
-    idProof: "", purpose: ""
+    phone: "", collegeId: "", gender: "",
+    bloodGroup: "", guardianName: "", emergencyPhone: "",
+    address: "", course: "", designation: ""
   });
 
-  // Load existing profile if available
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("user"));
-    // Check if user has basic required fields saved
-    if (stored && stored.phone) {
-      setSavedUser(stored);
-      setProfileSaved(true);
-      // Pre-fill form for edit mode
-      setFormData(prev => ({ ...prev, ...stored, role: stored.role || "student" }));
+    if (stored) {
+      setUser(stored);
+      // If profile completed, show view mode
+      if (stored.profileCompleted && stored.phone) {
+        setMode("view");
+      } else {
+        setMode("form");
+      }
+    } else {
+      navigate("/login");
     }
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.phone || !formData.gender) {
+      toast.error("Phone number and gender are required.");
+      return;
+    }
     setIsSubmitting(true);
     try {
-      // Clean up payload based on role to avoid sending empty irrelevant fields
-      const payload = { ...formData };
-      if (payload.role !== 'student') {
-        delete payload.collegeId; delete payload.course; delete payload.year; delete payload.guardianName;
-      }
-      if (payload.role !== 'staff') {
-        delete payload.employeeId; delete payload.department;
-      }
-      if (payload.role !== 'guest') {
-        delete payload.idProof; delete payload.purpose;
-      }
-
-      const res = await API.put("/api/auth/complete-profile", payload);
-      const updatedUser = res.data.user;
-      
+      const res = await API.put("/api/auth/complete-profile", formData);
+      const updatedUser = { ...user, ...res.data.user };
       localStorage.setItem("user", JSON.stringify(updatedUser));
-      setSavedUser(updatedUser);
-      toast.success("Profile secured! 🎉");
-      
-      setTimeout(() => {
-        setIsSubmitting(false);
-        setProfileSaved(true);
-      }, 800);
+      setUser(updatedUser);
+      toast.success("Profile saved! ✅");
+      setTimeout(() => { setMode("view"); }, 800);
     } catch (err) {
-      toast.error("Profile update failed. Check network.");
+      toast.error(err?.response?.data?.message || "Update failed.");
+    } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ─── PROFILE VIEW (MODERN DIGITAL ID CARD STYLE) ────────────────────────
-  if (profileSaved && savedUser) {
+  const handleLogout = () => { localStorage.clear(); navigate("/login"); };
+
+  if (mode === "loading") return (
+    <div className="h-screen flex items-center justify-center bg-slate-50">
+      <div className="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"/>
+    </div>
+  );
+
+  // ── PROFILE VIEW MODE ──────────────────────────────────────────
+  if (mode === "view" && user) {
+    const roleColors = {
+      professor: "bg-sky-50 text-sky-700 border-sky-200",
+      hod: "bg-purple-50 text-purple-700 border-purple-200",
+      principal: "bg-amber-50 text-amber-700 border-amber-200",
+      admin: "bg-rose-50 text-rose-700 border-rose-200",
+      guest: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    };
+    const roleColor = roleColors[user.role] || roleColors.guest;
+
     return (
-      <div className="min-h-screen bg-[#F8FAFC] font-sans pb-12">
-        <Toaster position="top-right" />
+      <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
+        <Toaster position="top-right"/>
 
-        {/* Premium Header */}
-        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4">
-          <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src={SggsLogo} alt="SGGS Logo" className="w-10 object-contain drop-shadow-sm" />
-              <div>
-                <p className="text-lg font-extrabold text-slate-900 leading-none tracking-tight">StayPG</p>
-                <p className="text-[10px] font-bold text-sky-500 uppercase tracking-[0.2em] mt-1">Identity</p>
-              </div>
+        {/* ── HERO HEADER ── */}
+        <div className="bg-gradient-to-br from-sky-500 via-sky-600 to-teal-500 pb-28 pt-8 px-6 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=60 height=60 viewBox=0 0 60 60 xmlns=http://www.w3.org/2000/svg%3E%3Cg fill=none fill-rule=evenodd%3E%3Cg fill=%23ffffff opacity=.05%3E%3Cpath d=M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30"/>
+          <div className="max-w-3xl mx-auto relative z-10">
+            {/* Nav */}
+            <div className="flex justify-between items-center mb-10">
+              <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 text-white/80 hover:text-white text-sm font-bold transition-colors">
+                <ArrowRight size={16} className="rotate-180"/> Dashboard
+              </button>
+              <img src={SggsLogo} alt="SGGS" className="w-9 object-contain opacity-90"/>
+              <button onClick={handleLogout} className="flex items-center gap-2 text-white/80 hover:text-white text-sm font-bold transition-colors">
+                <LogOut size={15}/> Sign Out
+              </button>
             </div>
-            <button onClick={() => setProfileSaved(false)}
-              className="flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2 rounded-full text-sm font-bold text-slate-700 shadow-sm transition-all active:scale-95">
-              <Edit3 size={16} className="text-sky-500" /> Edit
-            </button>
+
+            {/* Avatar + Name */}
+            <div className="flex flex-col items-center text-center">
+              <div className="relative mb-4">
+                <div className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center border-4 border-white/30 shadow-2xl">
+                  <span className="text-4xl font-black text-white">{user.name?.charAt(0).toUpperCase()}</span>
+                </div>
+                <button onClick={() => setMode("form")}
+                  className="absolute -bottom-2 -right-2 w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-lg border border-slate-100 text-slate-600 hover:text-sky-600 transition-colors">
+                  <Edit3 size={14}/>
+                </button>
+              </div>
+              <h1 className="text-2xl font-extrabold text-white mb-1">{user.name}</h1>
+              <p className="text-sky-100 font-medium text-sm mb-3">{user.email}</p>
+              <span className={`px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-widest border ${roleColor}`}>
+                {user.role}
+              </span>
+            </div>
           </div>
-        </nav>
+        </div>
 
-        <div className="max-w-3xl mx-auto px-6 py-8">
-          {/* Digital ID Card */}
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            className="relative bg-slate-900 rounded-[2rem] p-8 mb-8 overflow-hidden shadow-2xl shadow-slate-900/20">
-            {/* Background Accents */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-sky-400 to-teal-400 rounded-full blur-[80px] opacity-20 -translate-y-1/2 translate-x-1/4 pointer-events-none" />
-            
-            <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <div className="w-24 h-24 bg-gradient-to-br from-sky-400 to-teal-400 rounded-[1.5rem] p-[2px]">
-                <div className="w-full h-full bg-slate-900 rounded-[1.4rem] flex items-center justify-center text-4xl font-extrabold text-white">
-                  {savedUser.name?.charAt(0)?.toUpperCase()}
-                </div>
-              </div>
-              
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h2 className="text-3xl font-extrabold text-white tracking-tight">{savedUser.name}</h2>
-                  <span className="bg-sky-500/20 text-sky-300 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest border border-sky-500/30">
-                    {savedUser.role || "Student"}
-                  </span>
-                </div>
-                <p className="text-slate-400 text-sm font-medium flex items-center gap-2">
-                  <MapPin size={14} /> SGGSIE&T, Vishnupuri, Nanded
-                </p>
-              </div>
+        {/* ── PROFILE CARDS ── */}
+        <div className="max-w-3xl mx-auto px-5 -mt-16 pb-12 relative z-10 space-y-4">
 
-              {/* Dynamic Primary ID display based on role */}
-              <div className="bg-white/10 backdrop-blur-md border border-white/10 px-5 py-3 rounded-2xl text-right w-full sm:w-auto">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
-                  {savedUser.role === 'staff' ? 'Employee ID' : savedUser.role === 'guest' ? 'ID Proof' : 'College ID'}
-                </p>
-                <p className="text-lg font-mono font-bold text-white">
-                  {savedUser.collegeId || savedUser.employeeId || savedUser.idProof || "—"}
-                </p>
-              </div>
+          {/* Status Card */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-[1.75rem] p-6 shadow-xl border border-slate-100">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Account Status</p>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: "Profile", value: user.profileCompleted ? "Complete" : "Pending", color: user.profileCompleted ? "text-emerald-600" : "text-amber-600", icon: <CheckCircle2 size={20}/> },
+                { label: "Gender", value: user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : "—", color: "text-sky-600", icon: <User size={20}/> },
+                { label: "Joined", value: new Date().getFullYear(), color: "text-slate-600", icon: <Calendar size={20}/> },
+              ].map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2 ${stat.color} bg-slate-50`}>{stat.icon}</div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{stat.label}</p>
+                  <p className={`text-sm font-extrabold ${stat.color}`}>{stat.value}</p>
+                </div>
+              ))}
             </div>
           </motion.div>
 
-          {/* Info Sections */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="bg-white rounded-[1.5rem] border border-slate-200/60 p-6 shadow-sm">
-              <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2 mb-6">
-                <Briefcase size={18} className="text-sky-500" /> Role Specific Details
-              </h3>
-              <div className="space-y-5">
-                {savedUser.role === 'student' && (
-                  <>
-                    <ProfileRow icon={<GraduationCap />} label="Course" value={savedUser.course} />
-                    <ProfileRow icon={<Calendar />} label="Year" value={savedUser.year} />
-                  </>
-                )}
-                {savedUser.role === 'staff' && (
-                  <ProfileRow icon={<Building2 />} label="Department" value={savedUser.department} />
-                )}
-                {savedUser.role === 'guest' && (
-                  <ProfileRow icon={<UserCheck />} label="Purpose of Visit" value={savedUser.purpose} />
-                )}
-                <ProfileRow icon={<Phone />} label="Personal Mobile" value={savedUser.phone} />
-              </div>
-            </motion.div>
+          {/* Contact Info */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="bg-white rounded-[1.75rem] p-6 shadow-sm border border-slate-100">
+            <div className="flex justify-between items-center mb-5">
+              <p className="text-sm font-extrabold text-slate-800">Contact Information</p>
+              <button onClick={() => setMode("form")} className="text-xs font-bold text-sky-500 hover:text-sky-700 flex items-center gap-1">
+                <Edit3 size={12}/> Edit
+              </button>
+            </div>
+            <div className="space-y-4">
+              {[
+                { icon: <Mail size={18}/>, label: "Email", value: user.email, color: "text-sky-500 bg-sky-50" },
+                { icon: <Phone size={18}/>, label: "Mobile", value: user.phone || "Not provided", color: "text-emerald-500 bg-emerald-50" },
+                { icon: <CreditCard size={18}/>, label: "College ID", value: user.collegeId || "Not provided", color: "text-purple-500 bg-purple-50" },
+                { icon: <Briefcase size={18}/>, label: "Role / Designation", value: user.role || "—", color: "text-amber-500 bg-amber-50" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${item.color}`}>{item.icon}</div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{item.label}</p>
+                    <p className="text-sm font-extrabold text-slate-800">{item.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="bg-white rounded-[1.5rem] border border-slate-200/60 p-6 shadow-sm">
-              <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2 mb-6">
-                <ShieldAlert size={18} className="text-rose-500" /> Emergency & Address
-              </h3>
-              <div className="space-y-5">
-                {savedUser.role === 'student' && (
-                  <ProfileRow icon={<User />} label="Guardian" value={savedUser.guardianName} />
-                )}
-                <ProfileRow icon={<Phone />} label="Emergency Contact" value={savedUser.emergencyPhone} />
-                <ProfileRow icon={<MapPin />} label="Permanent Address" value={savedUser.address} />
-              </div>
-            </motion.div>
-          </div>
+          {/* Emergency Info */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+            className="bg-white rounded-[1.75rem] p-6 shadow-sm border border-slate-100">
+            <p className="text-sm font-extrabold text-slate-800 mb-5 flex items-center gap-2">
+              <ShieldAlert size={17} className="text-rose-500"/> Emergency Information
+            </p>
+            <div className="space-y-3">
+              {[
+                { label: "Guardian Name", value: user.guardianName || "Not provided" },
+                { label: "Emergency Contact", value: user.emergencyPhone || "Not provided" },
+                { label: "Blood Group", value: user.bloodGroup || "Not provided" },
+                { label: "Address", value: user.address || "Not provided" },
+              ].map((item) => (
+                <div key={item.label} className="flex justify-between items-start py-2.5 border-b border-slate-50 last:border-0">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{item.label}</span>
+                  <span className="text-xs font-extrabold text-slate-700 text-right max-w-[55%]">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
 
-          {/* Quick Actions Navigation */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button onClick={() => navigate("/dashboard")}
-              className="flex items-center justify-between bg-white hover:bg-slate-50 text-slate-800 p-5 rounded-2xl font-bold border border-slate-200/60 shadow-sm transition-all group">
-              <span className="flex items-center gap-3"><Building2 className="text-sky-500" size={20} /> Access Dashboard</span>
-              <ArrowRight size={18} className="text-slate-400 group-hover:text-sky-500 group-hover:translate-x-1 transition-all" />
-            </button>
+          {/* Quick Actions */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            className="grid grid-cols-2 gap-3">
             <button onClick={() => navigate("/my-bookings")}
-              className="flex items-center justify-between bg-white hover:bg-slate-50 text-slate-800 p-5 rounded-2xl font-bold border border-slate-200/60 shadow-sm transition-all group">
-              <span className="flex items-center gap-3"><CheckCircle2 className="text-teal-500" size={20} /> My Bookings</span>
-              <ArrowRight size={18} className="text-slate-400 group-hover:text-teal-500 group-hover:translate-x-1 transition-all" />
+              className="bg-sky-500 hover:bg-sky-600 text-white p-4 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2">
+              <CalendarCheck size={17}/> My Bookings
+            </button>
+            <button onClick={() => setMode("form")}
+              className="bg-white hover:bg-slate-50 text-slate-700 p-4 rounded-2xl font-bold text-sm transition-all shadow-sm border border-slate-100 flex items-center justify-center gap-2">
+              <Edit3 size={17}/> Edit Profile
             </button>
           </motion.div>
         </div>
@@ -194,164 +202,133 @@ export default function CompleteProfile() {
     );
   }
 
-  // ─── DYNAMIC FORM VIEW ──────────────────────────────────────────────────
+  // ── FORM MODE ──────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-12">
-      <Toaster position="top-right" />
+    <div className="min-h-screen bg-slate-50 font-sans">
+      <Toaster position="top-right"/>
 
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4 shadow-sm">
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <img src={SggsLogo} alt="SGGS Logo" className="w-9 object-contain drop-shadow-sm" />
-          <div>
-            <p className="text-base font-extrabold text-slate-900 leading-none">Setup Profile</p>
-            <p className="text-[10px] font-bold text-sky-500 uppercase tracking-widest mt-1">StayPG Booking System</p>
-          </div>
+      {/* Header */}
+      <div className="bg-white border-b border-slate-100 px-5 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <button onClick={() => user?.profileCompleted ? setMode("view") : navigate(-1)}
+          className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-600 hover:text-sky-600 transition-colors">
+          <ArrowRight size={18} className="rotate-180"/>
+        </button>
+        <div className="flex items-center gap-2">
+          <img src={SggsLogo} alt="" className="w-7 object-contain"/>
+          <span className="font-extrabold text-slate-800 text-sm">Edit Profile</span>
         </div>
-      </nav>
+        <div className="w-9"/>
+      </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-8">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 overflow-hidden">
-          
-          <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-8">
-            
-            {/* Role Selection Segment Control */}
-            <div>
-              <label className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-3 block">
-                I am a...
-              </label>
-              <div className="flex p-1 bg-slate-100 rounded-xl">
-                {['student', 'staff', 'guest'].map((roleType) => (
-                  <button key={roleType} type="button"
-                    onClick={() => setFormData({ ...formData, role: roleType })}
-                    className={`flex-1 py-3 text-sm font-bold rounded-lg capitalize transition-all duration-300 ${
-                      formData.role === roleType 
-                        ? 'bg-white text-sky-600 shadow-sm border border-slate-200/50' 
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}>
-                    {roleType}
-                  </button>
-                ))}
+      <div className="max-w-2xl mx-auto px-5 py-8">
+        <div className="text-center mb-7">
+          <div className="w-16 h-16 bg-sky-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-sky-500/20">
+            <span className="text-2xl font-black text-white">{user?.name?.charAt(0).toUpperCase()}</span>
+          </div>
+          <h1 className="text-xl font-extrabold text-slate-800">{user?.name}</h1>
+          <p className="text-xs font-bold text-sky-500 uppercase tracking-widest mt-1">Complete your profile for hostel access</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Basic Info */}
+          <div className="bg-white rounded-[1.75rem] p-6 shadow-sm border border-slate-100">
+            <p className="text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <User size={14} className="text-sky-500"/> Basic Information
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FastInput
+                icon={<Phone size={16}/>} label="Mobile Number *"
+                placeholder="+91 98765 43210" type="tel"
+                onChange={(v) => setFormData({...formData, phone: v})}
+                defaultValue={formData.phone}
+              />
+              <FastSelect
+                icon={<User size={16}/>} label="Gender *"
+                options={[{v:"male",l:"Male"},{v:"female",l:"Female"}]}
+                onChange={(v) => setFormData({...formData, gender: v})}
+              />
+              <FastInput
+                icon={<CreditCard size={16}/>} label="College / Employee ID"
+                placeholder="e.g. SGGS-2022-CS-001" uppercase
+                onChange={(v) => setFormData({...formData, collegeId: v})}
+              />
+              <FastInput
+                icon={<Briefcase size={16}/>} label="Designation / Department"
+                placeholder="e.g. HOD, Computer Science"
+                onChange={(v) => setFormData({...formData, designation: v})}
+              />
+            </div>
+          </div>
+
+          {/* Emergency */}
+          <div className="bg-white rounded-[1.75rem] p-6 shadow-sm border border-slate-100">
+            <p className="text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <ShieldAlert size={14} className="text-rose-500"/> Emergency Information
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FastInput
+                icon={<User size={16}/>} label="Guardian Name"
+                placeholder="Parent / Spouse name"
+                onChange={(v) => setFormData({...formData, guardianName: v})}
+              />
+              <FastInput
+                icon={<Phone size={16}/>} label="Emergency Contact"
+                placeholder="Emergency phone number"
+                onChange={(v) => setFormData({...formData, emergencyPhone: v})}
+              />
+              <FastSelect
+                icon={<HeartPulse size={16}/>} label="Blood Group"
+                options={["A+","A-","B+","B-","O+","O-","AB+","AB-"].map(v=>({v,l:v}))}
+                onChange={(v) => setFormData({...formData, bloodGroup: v})}
+              />
+              <div className="sm:col-span-1"/>
+              <div className="sm:col-span-2">
+                <FastInput
+                  icon={<MapPin size={16}/>} label="Permanent Address"
+                  placeholder="House No, Street, City, State, PIN"
+                  onChange={(v) => setFormData({...formData, address: v})}
+                />
               </div>
             </div>
+          </div>
 
-            {/* Dynamic Fields Section */}
-            <motion.div layout className="space-y-6">
-              <h3 className="text-lg font-extrabold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
-                <IdCard size={20} className="text-sky-500" /> Identity Details
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <AnimatePresence mode="popLayout">
-                  {/* STUDENT FIELDS */}
-                  {formData.role === 'student' && (
-                    <motion.div key="student-fields" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="contents">
-                      <InputField icon={<IdCard />} label="Registration / College ID" placeholder="e.g. 2022BTECS000" uppercase
-                        value={formData.collegeId} onChange={(e) => setFormData({ ...formData, collegeId: e.target.value })} />
-                      <SelectField icon={<GraduationCap />} label="Course" value={formData.course}
-                        options={["B.Tech 1st Year", "B.Tech 2nd Year", "B.Tech 3rd Year", "B.Tech 4th Year", "M.Tech", "Ph.D"]}
-                        onChange={(e) => setFormData({ ...formData, course: e.target.value })} />
-                      <InputField icon={<User />} label="Guardian Name" placeholder="Parent/Guardian Full Name"
-                        value={formData.guardianName} onChange={(e) => setFormData({ ...formData, guardianName: e.target.value })} />
-                    </motion.div>
-                  )}
-
-                  {/* STAFF FIELDS */}
-                  {formData.role === 'staff' && (
-                    <motion.div key="staff-fields" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="contents">
-                      <InputField icon={<IdCard />} label="Employee ID" placeholder="e.g. EMP12345" uppercase
-                        value={formData.employeeId} onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })} />
-                      <InputField icon={<Building2 />} label="Department" placeholder="e.g. Computer Science"
-                        value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
-                    </motion.div>
-                  )}
-
-                  {/* GUEST FIELDS */}
-                  {formData.role === 'guest' && (
-                    <motion.div key="guest-fields" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="contents">
-                      <InputField icon={<IdCard />} label="ID Proof Number (Aadhar/PAN)" placeholder="Enter ID Number" uppercase
-                        value={formData.idProof} onChange={(e) => setFormData({ ...formData, idProof: e.target.value })} />
-                      <InputField icon={<UserCheck />} label="Purpose of Visit" placeholder="e.g. Guest Lecture, Exam Duty"
-                        value={formData.purpose} onChange={(e) => setFormData({ ...formData, purpose: e.target.value })} />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* COMMON FIELDS */}
-                <InputField icon={<Phone />} label="Your Mobile Number" placeholder="+91 98765 43210"
-                  value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
-              </div>
-            </motion.div>
-
-            {/* Contact & Emergency Section */}
-            <motion.div layout>
-              <h3 className="text-lg font-extrabold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3 mb-5 mt-4">
-                <AlertCircle size={20} className="text-rose-500" /> Contact & Address
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <InputField icon={<Phone />} label="Emergency Contact Phone" placeholder="For emergencies only"
-                  value={formData.emergencyPhone} onChange={(e) => setFormData({ ...formData, emergencyPhone: e.target.value })} />
-                <div className="md:col-span-2">
-                  <InputField icon={<MapPin />} label="Permanent Residential Address" placeholder="House No, Street, City, State, PIN"
-                    value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
-                </div>
-              </div>
-            </motion.div>
-
-            <button type="submit" disabled={isSubmitting}
-              className="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white py-[1.2rem] rounded-2xl font-extrabold uppercase text-sm tracking-[0.15em] shadow-xl shadow-slate-900/20 transition-all flex justify-center items-center gap-3 active:scale-95 disabled:opacity-70">
-              {isSubmitting ? <Loader2 size={20} className="animate-spin text-sky-400" /> : <>Save & Continue <ArrowRight size={18} className="text-sky-400" /></>}
-            </button>
-          </form>
-        </motion.div>
+          <button type="submit" disabled={isSubmitting}
+            className="w-full bg-sky-500 hover:bg-sky-600 text-white py-4 rounded-2xl font-extrabold uppercase text-sm tracking-[0.15em] shadow-lg shadow-sky-500/25 transition-all flex justify-center items-center gap-3 active:scale-95 disabled:opacity-70">
+            {isSubmitting ? <Loader2 size={19} className="animate-spin"/> : <><CheckCircle2 size={19}/> Save Profile</>}
+          </button>
+          <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            Shared securely with Rector's Office only.
+          </p>
+        </form>
       </div>
     </div>
   );
 }
 
-// ─── HELPER COMPONENTS ───────────────────────────────────────────────────
-
-function ProfileRow({ icon, label, value }) {
-  return (
-    <div className="flex items-center gap-4 group">
-      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-sky-500 group-hover:bg-sky-50 transition-colors flex-shrink-0">
-        {React.cloneElement(icon, { size: 18 })}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
-        <p className="text-sm font-bold text-slate-800 truncate">{value || "—"}</p>
-      </div>
-    </div>
-  );
-}
-
-function InputField({ icon, label, placeholder, uppercase, value, onChange }) {
+function FastInput({ icon, label, placeholder, uppercase, onChange, type = "text", defaultValue = "" }) {
   return (
     <div>
-      <label className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mb-2 block ml-1">{label}</label>
-      <div className="relative group">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors">
-          {React.cloneElement(icon, { size: 18 })}
-        </div>
-        <input required type="text" placeholder={placeholder} value={value} onChange={onChange}
-          className={`w-full py-3.5 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-500/10 transition-all text-sm font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-medium ${uppercase ? "uppercase" : ""}`} />
+      <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5 block">{label}</label>
+      <div className="relative">
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sky-400">{React.cloneElement(icon, { size: 15 })}</div>
+        <input type={type} placeholder={placeholder} defaultValue={defaultValue}
+          onChange={(e) => onChange(e.target.value)}
+          className={`w-full py-3 pl-10 pr-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-sky-400 focus:bg-white transition-all text-sm font-bold text-slate-700 placeholder-slate-300 ${uppercase ? "uppercase" : ""}`} />
       </div>
     </div>
   );
 }
 
-function SelectField({ icon, label, options, value, onChange }) {
+function FastSelect({ icon, label, options, onChange }) {
   return (
     <div>
-      <label className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mb-2 block ml-1">{label}</label>
-      <div className="relative group">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors pointer-events-none">
-          {React.cloneElement(icon, { size: 18 })}
-        </div>
-        <select required value={value || ""} onChange={onChange}
-          className="w-full py-3.5 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-500/10 transition-all text-sm font-bold text-slate-800 appearance-none cursor-pointer">
-          <option value="" disabled>Select Option</option>
-          {options.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
+      <label className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5 block">{label}</label>
+      <div className="relative">
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sky-400 pointer-events-none">{React.cloneElement(icon, { size: 15 })}</div>
+        <select defaultValue="" onChange={(e) => onChange(e.target.value)}
+          className="w-full py-3 pl-10 pr-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-sky-400 focus:bg-white transition-all text-sm font-bold text-slate-700 appearance-none cursor-pointer">
+          <option value="" disabled>Select...</option>
+          {options.map((opt) => <option key={opt.v} value={opt.v}>{opt.l}</option>)}
         </select>
       </div>
     </div>

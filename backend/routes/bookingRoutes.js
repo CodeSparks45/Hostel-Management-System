@@ -1,37 +1,47 @@
-const express    = require("express");
-const router     = express.Router();
+const express = require("express");
+const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
-const requireRole    = require("../middleware/roleMiddleware");
-
+const requireRole = require("../middleware/roleMiddleware");
 const {
   bookRoom,
   getMyBookings,
   getAllBookings,
+  getRoomAvailability,
   approveBooking,
   rejectBooking,
+  checkInBooking,
   updateReceipt,
 } = require("../controllers/bookingController");
 
-// ── User Routes (Login hona chahiye) ─────────────────────────────
-router.post("/",           authMiddleware, bookRoom);          // Room book karo
-router.get("/my",          authMiddleware, getMyBookings);     // Apni bookings dekho
-router.patch("/receipt/:id", authMiddleware, updateReceipt);  // Receipt URL save karo
+// ── Public (login chahiye) ────────────────────────────────────────
+router.post("/",               authMiddleware, bookRoom);
+router.get("/my",              authMiddleware, getMyBookings);
+router.patch("/receipt/:id",   authMiddleware, updateReceipt);
 
-// ── Rector / Admin Routes ─────────────────────────────────────────
-router.get("/all",         
-  authMiddleware, 
-  requireRole("admin", "rector", "principal"), 
+// ── Room availability — frontend ke liye ─────────────────────────
+router.get("/room-status",     authMiddleware, getRoomAvailability);
+
+// ── Rector/Admin only ─────────────────────────────────────────────
+router.get("/all",
+  authMiddleware,
+  requireRole("admin", "rector", "principal", "hod"),
   getAllBookings
 );
-router.patch("/approve/:id", 
-  authMiddleware, 
-  requireRole("admin", "rector", "principal"), 
+router.patch("/approve/:id",
+  authMiddleware,
+  requireRole("admin", "rector", "principal", "hod"),
   approveBooking
 );
-router.patch("/reject/:id",  
-  authMiddleware, 
-  requireRole("admin", "rector", "principal"), 
+router.patch("/reject/:id",
+  authMiddleware,
+  requireRole("admin", "rector", "principal", "hod"),
   rejectBooking
+);
+
+// ── Guard scanner ────────────────────────────────────────────────
+router.patch("/checkin/:id",
+  authMiddleware,
+  checkInBooking
 );
 
 module.exports = router;
