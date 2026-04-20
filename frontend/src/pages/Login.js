@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
@@ -15,6 +15,29 @@ export default function Login() {
   const [isHoveringHome, setIsHoveringHome] = useState(false);
 
   const navigate = useNavigate();
+
+  // ── NEW LOGIC ADDED: Live Campus Status Fetch ──
+  const [roomSummary, setRoomSummary] = useState(null);
+
+  useEffect(() => {
+    fetchPublicRoomSummary();
+  }, []);
+
+  const fetchPublicRoomSummary = async () => {
+    try {
+      // Public endpoint — token ki zaroorat nahi
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/book/public-summary`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setRoomSummary(data);
+      }
+    } catch (e) {
+      // Silent fail — disclaimer optional hai
+    }
+  };
+  // ──────────────────────────────────────────────
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -215,6 +238,65 @@ export default function Login() {
         </div>
 
       </div>
+
+      {/* ── PREMIUM FLOATING LIVE STATUS WIDGET (Dynamic Island Style) ── */}
+      <AnimatePresence>
+        {roomSummary && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] w-[90%] max-w-md pointer-events-none"
+          >
+            <div className="bg-slate-900/90 backdrop-blur-2xl border border-slate-700/50 shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-full p-2 pr-6 flex items-center justify-between gap-4">
+              
+              {/* Left Live Indicator */}
+              <div className="flex items-center gap-2.5 bg-slate-800/80 rounded-full py-2 px-4 border border-slate-700">
+                <div className={`w-2.5 h-2.5 rounded-full animate-pulse shadow-[0_0_10px_currentColor] ${
+                  roomSummary.availableRooms === 0 ? "bg-rose-500 text-rose-500" :
+                  roomSummary.availableRooms <= 3 ? "bg-orange-500 text-orange-500" : "bg-emerald-400 text-emerald-400"
+                }`} />
+                <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest">Live</span>
+              </div>
+
+              {/* Center Info */}
+              <div className="flex-1 flex items-center justify-between gap-4 py-1">
+                <div className="flex flex-col">
+                  <span className="text-sm font-extrabold text-white leading-none mb-1">
+                    {roomSummary.availableRooms} / {roomSummary.totalRooms} Rooms
+                  </span>
+                  <span className={`text-[9px] font-bold uppercase tracking-widest ${
+                    roomSummary.availableRooms === 0 ? "text-rose-400" :
+                    roomSummary.availableRooms <= 3 ? "text-orange-400" : "text-emerald-400"
+                  }`}>
+                    {roomSummary.availableRooms === 0 ? "Fully Occupied" :
+                     roomSummary.availableRooms <= 3 ? "🔥 High Demand - Hurry!" : "Available to Book"}
+                  </span>
+                </div>
+
+                {/* Mini Visual Progress Bar */}
+                <div className="hidden sm:flex flex-col items-end gap-1.5">
+                  <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(roomSummary.availableRooms / roomSummary.totalRooms) * 100}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      className={`h-full rounded-full ${
+                        roomSummary.availableRooms === 0 ? "bg-rose-500" :
+                        roomSummary.availableRooms <= 3 ? "bg-orange-500" : "bg-emerald-400"
+                      }`}
+                    />
+                  </div>
+                  <span className="text-[8px] font-bold text-slate-400 tracking-widest uppercase">Capacity</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* ──────────────────────────────────────────────────────────────── */}
+
     </div>
   );
 }

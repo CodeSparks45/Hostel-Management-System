@@ -5,10 +5,11 @@ import {
   Lock, Eye, CheckCircle, Star, Wifi, Wind, Coffee,
    Search, Bell, Sparkles, Calendar, Shield,
   Zap, Building2,  MapPin, X,  
-   ArrowRight
+   ArrowRight, Users // ✅ ADDED Users ICON FOR GROUP BOOKING BANNER
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Toaster } from "react-hot-toast";
+import API from "../services/api"; // ✅ ADDED API IMPORT AT THE TOP
 
 import boys_hostel1 from "./boys_hostel1.jpeg";
 import boys_hostel2 from "./boys_hostel2.jpeg";
@@ -213,7 +214,6 @@ function StatPill({ icon, label, value, color }) {
 function RoomCard({ room, isLocked, isRoomBooked, onExplore, onBook, index }) {
   const [hovered, setHovered] = useState(false);
 
-  // ✅ NAYA LOGIC ADD KIYA: isRoomBooked flag ya availableRooms <= 0 check karega
   const isFull = isRoomBooked || (room.availableRooms !== undefined && room.availableRooms <= 0);
 
   return (
@@ -299,7 +299,6 @@ function RoomCard({ room, isLocked, isRoomBooked, onExplore, onBook, index }) {
             <Eye size={14} /> Details
           </button>
           
-          {/* ✅ NAYA LOGIC ADD KIYA: Agar room full/booked hai toh FULL dikhayega, Book karne nahi dega */}
           {isFull ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-1 bg-rose-50 text-rose-500 py-3 rounded-xl border border-rose-100 text-xs font-bold">
               <span>🔴 BOOKED</span>
@@ -323,12 +322,6 @@ function RoomCard({ room, isLocked, isRoomBooked, onExplore, onBook, index }) {
   );
 }
 
-// Helper: MongoDB room number → frontend room id map
-const getFrontendRoomId = (number, hostel) => {
-  const hostelPrefix = hostel.toLowerCase().includes("krishna") ? "krishna" : "sahyadri";
-  return `${hostelPrefix}-${number}`;  // e.g. "sahyadri-A4"
-};
-
 // ── MAIN HOME ─────────────────────────────────────────────────
 export default function Home() {
   const navigate = useNavigate();
@@ -348,14 +341,14 @@ export default function Home() {
 
   const [time, setTime] = useState(new Date());
 
-  // ✅ 1. Room availability fetch karne ka logic
+  // ✅ 1. NEW FETCH AVAILABILITY LOGIC
   const [roomAvailability, setRoomAvailability] = useState({});
+  const [availSummary, setAvailSummary]         = useState(null);
 
   useEffect(() => {
-    fetchRoomAvailability();
-    // Har 30 second mein refresh
-    const interval = setInterval(fetchRoomAvailability, 30000);
-    return () => clearInterval(interval);
+    fetchAvailability();
+    const iv = setInterval(fetchAvailability, 30000);
+    return () => clearInterval(iv);
   }, []);
 
   useEffect(() => {
@@ -363,32 +356,25 @@ export default function Home() {
     return () => clearInterval(t);
   }, []);
 
-  const fetchRoomAvailability = async () => {
+  const fetchAvailability = async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) return;
+      const res  = await API.get("/api/book/room-status");
+      const data = res.data;
 
-      const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/book/room-status`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
+      setAvailSummary(data.summary);
 
-      // Room number se map banao
-      const availMap = {};
-      data.forEach(r => {
-        // Frontend room id se match karna
-        const frontendId = getFrontendRoomId(r.number, r.hostel);
-        if (frontendId) {
-          availMap[frontendId] = {
-            isBooked: r.isBooked,
-            availableRooms: r.availableRooms,
-            mongoId: r._id
-          };
-        }
+      const map = {};
+      data.rooms?.forEach(r => {
+        // "sahyadri-A4" format mein map banao
+        const hostelPrefix = r.hostel.toLowerCase().includes("krishna") ? "krishna" : "sahyadri";
+        const key = `${hostelPrefix}-${r.number}`;
+        map[key] = r.isBooked;
       });
-      setRoomAvailability(availMap);
-    } catch (err) {
-      console.log("Room availability fetch failed:", err.message);
+      setRoomAvailability(map);
+    } catch (e) {
+      console.log("Avail fetch:", e.message);
     }
   };
 
@@ -590,6 +576,30 @@ export default function Home() {
           />
         </div>
 
+        {/* ✅ 3. GROUP BOOKING BANNER ADDED HERE */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          className="mb-6 bg-gradient-to-r from-slate-800 to-slate-900 rounded-[2rem] p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border border-slate-700 shadow-lg"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-sky-500/20 rounded-2xl flex items-center justify-center flex-shrink-0 border border-sky-500/30">
+              <Users size={22} className="text-sky-400" />
+            </div>
+            <div>
+              <p className="text-base font-extrabold text-white">Coming with a group?</p>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">
+                Recruiters, inspectors, or delegations — book all rooms in one go. Mixed gender OK.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate("/group-booking")}
+            className="flex-shrink-0 flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white px-6 py-3 rounded-2xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-sky-500/20 transition-all active:scale-95 whitespace-nowrap"
+          >
+            <Users size={15} /> Book for Group →
+          </button>
+        </motion.div>
+
         {/* ── FILTER BAR ── */}
         <motion.div
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
@@ -684,18 +694,17 @@ export default function Home() {
                   animate={{ opacity: 1 }}
                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                 >
-                  {/* ✅ 2. RoomCard ko isRoomBooked paas kar diya gaya hai */}
                   {genderRooms.map((room, i) => {
-                    const availInfo = roomAvailability[room.id];
-                    const isRoomBooked = availInfo ? availInfo.isBooked : false;
+                    // ✅ 4. FETCHING isRoomCurrentlyBooked AND PASSING TO RoomCard
+                    const isRoomCurrentlyBooked = roomAvailability[room.id] || false;
 
                     return (
                       <RoomCard
                         key={room.id}
-                        room={{ ...room, availableRooms: availInfo?.availableRooms ?? 1 }}
+                        room={room}
                         index={i}
                         isLocked={user.gender !== room.gender}
-                        isRoomBooked={isRoomBooked}  
+                        isRoomBooked={isRoomCurrentlyBooked} // ← ADDED THIS
                         onExplore={handleExplore}
                         onBook={handleBook}
                       />

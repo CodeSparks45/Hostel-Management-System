@@ -21,6 +21,9 @@ import SOS from "./pages/SOS";
 import Settings from "./pages/Settings";
 import HelpBot from "./pages/HelpBot";
 
+// ✅ NEW GROUP BOOKING IMPORT ADDED
+import GroupBooking from "./pages/GroupBooking";
+
 function App() {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
@@ -57,6 +60,9 @@ function App() {
         {/* NEW OUTSTANDING ROUTES */}
         <Route path="/settings" element={<Settings />} />
         <Route path="/helpbot" element={<HelpBot />} />
+
+        {/* ✅ NEW GROUP BOOKING ROUTE ADDED */}
+        <Route path="/group-booking" element={<GroupBooking />} />
 
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
